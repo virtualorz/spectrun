@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spectrum · 首次設定</title>
+<style>
+  :root{
+    --bg:#0E131B;--panel:#151C26;--panel-2:#1A2230;--inset:#10161F;
+    --line:#283341;--line-2:#1E2630;--ink:#E9EEF5;--dim:#97A3B4;--faint:#5E6A7B;
+    --accent:#56B6E6;--accent-soft:rgba(86,182,230,.14);
+    --run:#E0A33E;--run-soft:rgba(224,163,62,.22);
+    --ok:#3FB984;--ok-soft:rgba(63,185,132,.15);--err:#E06B6B;--err-soft:rgba(224,107,107,.14);
+    --ph1:#6C7CA8;--ph2:#9B7DD6;--ph3:#3FB984;
+    --radius:14px;--radius-sm:9px;
+    --mono:"SF Mono","JetBrains Mono","Fira Code",ui-monospace,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  }
+  html.light{--bg:#F4F6F8;--panel:#FFF;--panel-2:#FAFBFC;--inset:#EFF2F5;
+    --line:#E1E5EB;--line-2:#EBEEF2;--ink:#19212E;--dim:#5A6676;--faint:#96A0AF;
+    --accent:#1E84C7;--accent-soft:rgba(30,132,199,.10);--run:#B9791A;--run-soft:rgba(185,121,26,.20);
+    --ok:#1E9E6E;--ok-soft:rgba(30,158,110,.12);--err:#C0392B;--err-soft:rgba(192,57,43,.10);
+    --ph1:#7888B5;--ph2:#8A66C9;--ph3:#1E9E6E;}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 18px}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .topbar{width:100%;max-width:540px;display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .spectrum-mark{display:flex;gap:2px;align-items:flex-end;height:18px}
+  .spectrum-mark span{width:4px;border-radius:1px;display:block}
+  .spectrum-mark span:nth-child(1){height:10px;background:var(--ph1)}
+  .spectrum-mark span:nth-child(2){height:16px;background:var(--ph2)}
+  .spectrum-mark span:nth-child(3){height:13px;background:var(--ph3)}
+  .spectrum-mark span:nth-child(4){height:18px;background:var(--accent)}
+  .brand b{font-family:var(--mono);font-size:18px;font-weight:600;letter-spacing:.01em}
+  .brand .by{font-family:var(--mono);font-size:11px;color:var(--faint);margin-left:2px}
+  .icbtn{width:34px;height:34px;border-radius:99px;background:var(--panel);border:1px solid var(--line);color:var(--dim);cursor:pointer;font-size:15px}
+  .icbtn:hover{color:var(--ink);border-color:var(--accent)}
+
+  .card{width:100%;max-width:540px;background:var(--panel);border:1px solid var(--line-2);border-radius:var(--radius);padding:28px 30px 26px;box-shadow:0 10px 40px rgba(0,0,0,.18)}
+  html.light .card{box-shadow:0 8px 30px rgba(20,30,50,.07)}
+  .h1{font-size:21px;font-weight:600;margin:0 0 4px}
+  .lede{font-size:13.5px;color:var(--dim);margin-bottom:22px}
+
+  /* stepper */
+  .steps{display:flex;align-items:center;gap:10px;margin-bottom:24px}
+  .step{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--faint)}
+  .step .n{width:22px;height:22px;border-radius:99px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;flex:none}
+  .step.active{color:var(--ink)}
+  .step.active .n{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+  .step.done .n{border-color:var(--ok);background:var(--ok-soft);color:var(--ok)}
+  .step.done{color:var(--dim)}
+  .steps .bar{flex:1;height:1px;background:var(--line)}
+
+  .field{margin-bottom:14px}
+  .flabel{display:block;font-size:12.5px;color:var(--ink);font-weight:600;margin-bottom:7px}
+  .inwrap{position:relative;display:flex}
+  .inwrap input{width:100%;height:44px;background:var(--inset);border:1px solid var(--line);border-radius:var(--radius-sm);color:var(--ink);font-family:var(--mono);font-size:13.5px;padding:0 44px 0 13px;letter-spacing:.02em}
+  .inwrap input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .inwrap input::placeholder{color:var(--faint);letter-spacing:0}
+  .inwrap input.bad{border-color:var(--err)}
+  .eye{position:absolute;right:6px;top:6px;width:32px;height:32px;border:none;background:none;color:var(--faint);cursor:pointer;border-radius:7px;display:flex;align-items:center;justify-content:center}
+  .eye:hover{color:var(--ink);background:var(--panel-2)}
+  .eye svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7}
+
+  .help{font-size:12px;color:var(--dim);margin-top:9px;line-height:1.6}
+  .help a,.linklike{color:var(--accent);cursor:pointer;text-decoration:none}
+  .help a:hover,.linklike:hover{text-decoration:underline}
+  .howto{margin-top:10px;border:1px solid var(--line-2);border-radius:var(--radius-sm);overflow:hidden}
+  .howto summary{list-style:none;cursor:pointer;padding:10px 13px;font-size:12.5px;color:var(--dim);display:flex;align-items:center;gap:8px;user-select:none}
+  .howto summary::-webkit-details-marker{display:none}
+  .howto summary:hover{color:var(--ink)}
+  .howto[open] summary{border-bottom:1px solid var(--line-2);color:var(--ink)}
+  .howto .chev{transition:transform .15s}
+  .howto[open] .chev{transform:rotate(90deg)}
+  .howto .body{padding:12px 14px;font-size:12.5px;color:var(--dim);line-height:1.7}
+  .howto ol{margin:0;padding-left:18px}
+  .howto code{font-family:var(--mono);font-size:11.5px;background:var(--inset);color:var(--ink);padding:1px 6px;border-radius:5px}
+
+  .secnote{display:flex;gap:9px;align-items:flex-start;font-size:12px;color:var(--dim);background:var(--inset);border-radius:var(--radius-sm);padding:11px 13px;margin:16px 0 20px;line-height:1.6}
+  .secnote svg{width:16px;height:16px;flex:none;margin-top:1px;fill:none;stroke:var(--ok);stroke-width:1.7}
+  .secnote b{color:var(--ink);font-weight:600}
+
+  .btn{width:100%;height:44px;border:none;border-radius:var(--radius-sm);background:var(--accent);color:#06121C;font-family:var(--sans);font-size:14.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px}
+  html.light .btn{color:#fff}
+  .btn:hover{filter:brightness(1.06)}
+  .btn:disabled{opacity:.55;cursor:not-allowed;filter:none}
+  .btn.ghost{background:var(--inset);color:var(--ink);border:1px solid var(--line)}
+  .btn .spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}
+  html.light .btn .spin{border-color:rgba(255,255,255,.5);border-top-color:#fff}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  .msg{font-size:12.5px;border-radius:var(--radius-sm);padding:10px 13px;margin-top:12px;display:none;align-items:center;gap:9px}
+  .msg.show{display:flex}
+  .msg.err{background:var(--err-soft);color:var(--err)}
+  .msg svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8}
+
+  /* connected bar */
+  .conn{display:flex;align-items:center;gap:11px;background:var(--ok-soft);border:1px solid rgba(63,185,132,.3);border-radius:var(--radius-sm);padding:11px 14px;margin-bottom:22px}
+  .conn .ava{width:30px;height:30px;border-radius:99px;background:var(--panel-2);display:flex;align-items:center;justify-content:center;color:var(--ok);flex:none}
+  .conn .ava svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7}
+  .conn .who{flex:1;min-width:0}
+  .conn .who .u{font-family:var(--mono);font-size:13px;color:var(--ink);font-weight:600}
+  .conn .who .r{font-family:var(--mono);font-size:11px;color:var(--dim)}
+  .conn .change{font-size:12px;color:var(--dim);cursor:pointer;background:none;border:none;text-decoration:underline}
+  .conn .change:hover{color:var(--ink)}
+
+  /* repo list */
+  .seclab{font-size:12.5px;color:var(--ink);font-weight:600;margin-bottom:4px}
+  .secsub{font-size:12px;color:var(--dim);margin-bottom:12px}
+  .repo{display:flex;align-items:center;gap:12px;border:1px solid var(--line-2);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;cursor:pointer}
+  .repo:hover{border-color:var(--line)}
+  .repo.sel{border-color:var(--accent);background:var(--accent-soft)}
+  .repo .cb{width:18px;height:18px;border:1.5px solid var(--line);border-radius:5px;flex:none;display:flex;align-items:center;justify-content:center}
+  .repo.sel .cb{background:var(--accent);border-color:var(--accent)}
+  .repo .cb svg{width:12px;height:12px;fill:none;stroke:#06121C;stroke-width:2.6;opacity:0}
+  html.light .repo.sel .cb svg{stroke:#fff}
+  .repo.sel .cb svg{opacity:1}
+  .repo .info{flex:1;min-width:0}
+  .repo .rn{font-family:var(--mono);font-size:13px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .repo .rt{font-size:11.5px;color:var(--faint);margin-top:1px;display:flex;gap:8px;align-items:center}
+  .tag{font-size:10.5px;padding:1px 7px;border-radius:99px;font-weight:600}
+  .tag.priv{color:var(--run);background:var(--run-soft)}
+  .tag.pub{color:var(--dim);background:var(--inset)}
+  .tag.has{color:var(--ph3);background:var(--ok-soft)}
+  .repo.noflow{opacity:.5}
+  .addrow{display:flex;gap:8px;margin:12px 0 4px}
+  .addrow input{flex:1;height:40px;background:var(--inset);border:1px solid var(--line);border-radius:var(--radius-sm);color:var(--ink);font-family:var(--mono);font-size:12.5px;padding:0 12px}
+  .addrow input:focus{outline:none;border-color:var(--accent)}
+  .addrow button{height:40px;padding:0 16px;border:1px solid var(--line);background:var(--inset);color:var(--ink);border-radius:var(--radius-sm);cursor:pointer;font-size:13px;white-space:nowrap}
+  .addrow button:hover{border-color:var(--accent);color:var(--accent)}
+
+  .interval{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:18px 0 22px;padding:13px 14px;border:1px solid var(--line-2);border-radius:var(--radius-sm)}
+  .interval .il{font-size:13px}.interval .il .s{font-size:11.5px;color:var(--faint)}
+  .interval select{background:var(--inset);border:1px solid var(--line);color:var(--ink);font-family:var(--mono);font-size:12.5px;padding:7px 10px;border-radius:7px;cursor:pointer}
+  .interval select:focus{outline:none;border-color:var(--accent)}
+
+  .btnrow{display:flex;gap:10px}.btnrow .btn{flex:1}
+
+  /* done */
+  .done{text-align:center;padding:8px 0 2px}
+  .done .seal{width:62px;height:62px;border-radius:99px;background:var(--ok-soft);display:flex;align-items:center;justify-content:center;margin:4px auto 16px}
+  .done .seal svg{width:30px;height:30px;fill:none;stroke:var(--ok);stroke-width:2}
+  .done h2{font-size:19px;margin:0 0 6px}
+  .done p{font-size:13px;color:var(--dim);margin:0 0 18px}
+  .summary{text-align:left;background:var(--inset);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:20px;font-size:12.5px}
+  .summary .sr{display:flex;justify-content:space-between;padding:5px 0;color:var(--dim)}
+  .summary .sr b{color:var(--ink);font-family:var(--mono);font-weight:600}
+  .syncing{display:flex;align-items:center;gap:8px;justify-content:center;font-size:12px;color:var(--accent);margin-bottom:18px}
+  .syncing .spin{width:13px;height:13px;border:2px solid var(--accent-soft);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite}
+
+  .foot{max-width:540px;width:100%;text-align:center;font-size:11.5px;color:var(--faint);margin-top:18px}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">
+      <div class="spectrum-mark"><span></span><span></span><span></span><span></span></div>
+      <b>Spectrum</b><span class="by">/ specflow family</span>
+    </div>
+    <button class="icbtn" id="theme" aria-label="切換亮暗主題">◐</button>
+  </div>
+
+  <div class="card">
+    <!-- step indicator -->
+    <div class="steps">
+      <div class="step active" id="st1"><span class="n">1</span>連接 GitHub</div>
+      <div class="bar"></div>
+      <div class="step" id="st2"><span class="n">2</span>選擇 repository</div>
+    </div>
+
+    <!-- ===== STEP 1 ===== -->
+    <section id="s1">
+      <h1 class="h1">連接你的 GitHub</h1>
+      <p class="lede">Spectrum 需要一組唯讀的存取權杖,才能定期讀取 repo 裡的 specflow 開發記錄並分析。</p>
+
+      <div class="field">
+        <label class="flabel" for="tok">Personal Access Token</label>
+        <div class="inwrap">
+          <input id="tok" type="password" placeholder="github_pat_… 或 ghp_…" autocomplete="off" spellcheck="false">
+          <button class="eye" id="eye" type="button" aria-label="顯示/隱藏">
+            <svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <div class="msg err" id="tokErr"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span id="tokErrTxt"></span></div>
+
+        <details class="howto">
+          <summary><svg class="chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>怎麼建立這個 token?(建議用 Fine-grained,最小權限)</summary>
+          <div class="body">
+            <ol>
+              <li>到 GitHub → <span class="mono">Settings → Developer settings → Fine-grained tokens</span>。</li>
+              <li><b>Repository access</b>:只勾選你要讓 Spectrum 讀的 repo(不必開放全部)。</li>
+              <li><b>Permissions → Repository → Contents</b> 設為 <code>Read-only</code>,其餘維持 No access。</li>
+              <li>產生後複製 <code>github_pat_…</code> 貼到上面即可。</li>
+            </ol>
+            <div style="margin-top:9px">前往 <a href="#" onclick="return false">github.com/settings/personal-access-tokens</a></div>
+          </div>
+        </details>
+      </div>
+
+      <div class="secnote">
+        <svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9.5 12l1.8 1.8 3.5-3.8"/></svg>
+        <span>這組 token 會以 <b>AES 加密</b>後存放在你自己的伺服器(使用 Spectrum 的 APP_KEY 加密),只用於讀取,<b>不會外傳</b>到任何第三方。</span>
+      </div>
+
+      <button class="btn" id="verify"><span id="verifyTxt">驗證並連接</span></button>
+    </section>
+
+    <!-- ===== STEP 2 ===== -->
+    <section id="s2" class="hidden">
+      <div class="conn">
+        <div class="ava"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg></div>
+        <div class="who"><div class="u" id="ghUser">@virtualorz</div><div class="r" id="ghRate">已連接 · API 額度 4,998 / 5,000</div></div>
+        <button class="change" id="changeTok">更換</button>
+      </div>
+
+      <div class="seclab">選擇要追蹤的 repository</div>
+      <div class="secsub">已自動偵測哪些 repo 含有 <span class="mono">specflow/</span> 目錄;只有含此目錄的 repo 能被分析。</div>
+
+      <div id="repoList"></div>
+
+      <div class="addrow">
+        <input id="addRepo" placeholder="手動加入 owner/repo" spellcheck="false">
+        <button id="addBtn" type="button">加入</button>
+      </div>
+
+      <div class="interval">
+        <div class="il">同步頻率<div class="s">背景排程多久去 GitHub 拉一次新記錄</div></div>
+        <select id="freq">
+          <option value="5">每 5 分鐘</option>
+          <option value="15" selected>每 15 分鐘</option>
+          <option value="30">每 30 分鐘</option>
+          <option value="60">每小時</option>
+        </select>
+      </div>
+
+      <div class="btnrow">
+        <button class="btn ghost" id="back" style="flex:.5">上一步</button>
+        <button class="btn" id="finish">完成設定,開始分析</button>
+      </div>
+    </section>
+
+    <!-- ===== DONE ===== -->
+    <section id="done" class="hidden">
+      <div class="done">
+        <div class="seal"><svg viewBox="0 0 24 24"><path d="M4 12.5l5 5 11-12"/></svg></div>
+        <h2>Spectrum 已就緒</h2>
+        <p>設定完成,第一次同步正在背景進行。</p>
+        <div class="summary">
+          <div class="sr"><span>連接帳號</span><b id="dUser">@virtualorz</b></div>
+          <div class="sr"><span>追蹤的 repository</span><b id="dRepos">2 個</b></div>
+          <div class="sr"><span>同步頻率</span><b id="dFreq">每 15 分鐘</b></div>
+          <div class="sr"><span>Token 儲存</span><b>已加密 (AES)</b></div>
+        </div>
+        <div class="syncing"><span class="spin"></span>正在拉取首批 spec 記錄…</div>
+        <button class="btn" id="enter">進入 Spectrum</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="foot">自架單體服務 · 資料只留在你自己的機器上</div>
+
+<script>
+  // theme
+  (function(){try{if(localStorage.getItem('sf-theme')==='light')document.documentElement.classList.add('light');}catch(e){}
+    document.getElementById('theme').onclick=()=>{document.documentElement.classList.toggle('light');
+      try{localStorage.setItem('sf-theme',document.documentElement.classList.contains('light')?'light':'dark');}catch(e){}};})();
+
+  const $=id=>document.getElementById(id);
+  const tok=$('tok');
+
+  // show / hide token
+  $('eye').onclick=()=>{tok.type = tok.type==='password' ? 'text' : 'password'; tok.focus();};
+
+  // ---- step 1: verify (simulated) ----
+  const CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M4 12.5l5 5 11-12"/></svg>';
+  function showErr(t){$('tokErrTxt').textContent=t;$('tokErr').classList.add('show');tok.classList.add('bad');}
+  function clearErr(){$('tokErr').classList.remove('show');tok.classList.remove('bad');}
+  tok.addEventListener('input',clearErr);
+
+  $('verify').onclick=()=>{
+    const v=tok.value.trim();
+    clearErr();
+    if(!v){showErr('請先貼上 token。');return;}
+    if(!/^(ghp_|github_pat_)/.test(v)||v.length<16){
+      showErr('token 格式看起來不對,應以 github_pat_ 或 ghp_ 開頭。');return;}
+    // simulate network verify
+    const btn=$('verify'); btn.disabled=true;
+    $('verifyTxt').textContent='驗證中…';
+    btn.insertAdjacentHTML('afterbegin','<span class="spin" id="vs"></span>');
+    setTimeout(()=>{
+      // success
+      const u = v.startsWith('github_pat_') ? '@virtualorz' : '@virtualorz';
+      $('ghUser').textContent=u; $('dUser').textContent=u;
+      $('ghRate').textContent='已連接 · API 額度 4,998 / 5,000';
+      gotoStep(2);
+      btn.disabled=false; $('verifyTxt').textContent='驗證並連接';
+      const vs=$('vs'); if(vs)vs.remove();
+    },950);
+  };
+
+  // ---- stepper nav ----
+  function gotoStep(n){
+    $('s1').classList.toggle('hidden', n!==1);
+    $('s2').classList.toggle('hidden', n!==2);
+    $('done').classList.toggle('hidden', n!==3);
+    $('st1').className='step '+(n>1?'done':(n===1?'active':''));
+    $('st2').className='step '+(n>2?'done':(n===2?'active':''));
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  $('changeTok').onclick=()=>gotoStep(1);
+  $('back').onclick=()=>gotoStep(1);
+
+  // ---- step 2: repos ----
+  const repos=[
+    {full:'virtualorz/spectrum', priv:true,  flow:true},
+    {full:'virtualorz/specflow', priv:false, flow:true},
+    {full:'virtualorz/keepie',   priv:true,  flow:true},
+    {full:'virtualorz/neijin-tw',priv:true,  flow:false},
+    {full:'virtualorz/dotfiles', priv:false, flow:false}
+  ];
+  const selected=new Set(['virtualorz/spectrum','virtualorz/specflow']);
+
+  function renderRepos(){
+    $('repoList').innerHTML=repos.map(r=>{
+      const sel=selected.has(r.full);
+      const tags=`${r.priv?'<span class="tag priv">private</span>':'<span class="tag pub">public</span>'}`+
+                 `${r.flow?'<span class="tag has">含 specflow/</span>':'<span style="color:var(--faint)">無 specflow/ 目錄</span>'}`;
+      return `<div class="repo ${sel?'sel':''} ${r.flow?'':'noflow'}" data-r="${r.full}">
+        <div class="cb">${CHECK}</div>
+        <div class="info"><div class="rn">${r.full}</div><div class="rt">${tags}</div></div>
+      </div>`;
+    }).join('');
+    document.querySelectorAll('.repo').forEach(el=>{
+      el.onclick=()=>{
+        const f=el.dataset.r; const r=repos.find(x=>x.full===f);
+        if(!r.flow) return; // can't track repos without specflow/
+        selected.has(f)?selected.delete(f):selected.add(f);
+        renderRepos(); updateFinish();
+      };
+    });
+  }
+  function updateFinish(){ $('finish').disabled = selected.size===0; }
+
+  $('addBtn').onclick=()=>{
+    const v=$('addRepo').value.trim();
+    if(!/^[\w.-]+\/[\w.-]+$/.test(v)){return;}
+    if(!repos.find(r=>r.full===v)){ repos.push({full:v,priv:true,flow:true}); }
+    selected.add(v); $('addRepo').value=''; renderRepos(); updateFinish();
+  };
+  $('addRepo').addEventListener('keydown',e=>{if(e.key==='Enter')$('addBtn').click();});
+
+  $('finish').onclick=()=>{
+    const f=$('freq'); 
+    $('dRepos').textContent=selected.size+' 個';
+    $('dFreq').textContent=f.options[f.selectedIndex].text;
+    gotoStep(3);
+  };
+  $('enter').onclick=()=>{ $('enter').textContent='載入中…'; };
+
+  renderRepos(); updateFinish();
+</script>
+</body>
+</html>
