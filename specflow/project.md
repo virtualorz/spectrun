@@ -26,8 +26,8 @@ base_branches: [dev, development]
 ## 1. 技術棧
 
 - 語言/框架:PHP `^8.3` / Laravel `^13.8`
-- 資料庫:MySQL 8(`DB_CONNECTION=mysql`,host `mysql8`,database `specturn`)
-  - 測試環境改用 SQLite `:memory:`(見 `phpunit.xml`)
+- 資料庫:SQLite(`DB_CONNECTION=sqlite`,檔案 `database/database.sqlite`)
+  - 測試環境用 SQLite `:memory:`(見 `phpunit.xml`)
 - 快取:database driver(`CACHE_STORE=database`,測試環境為 `array`)
 - 佇列:database driver(`QUEUE_CONNECTION=database`,測試環境為 `sync`)
 - Session:file driver
@@ -75,8 +75,8 @@ base_branches: [dev, development]
 
 ## 5. 已知陷阱與例外
 
-- **本機與測試環境資料庫不同**:本機用 MySQL,`phpunit.xml` 把測試切到 SQLite `:memory:`。
-  撰寫 migration / query 時避免使用 MySQL 專屬語法(或要確認 SQLite 也支援),否則測試會綠、production 會炸。
+- **資料庫一律 SQLite**:本機(`database/database.sqlite`)與測試(`:memory:`)同為 SQLite。
+  撰寫 migration / query 時避免使用 MySQL/Postgres 專屬語法,確保 SQLite 支援(JSON 欄位需 SQLite 3.38+)。
 - **快取與佇列都跑在 database driver**:新增依賴 queue 的功能時,記得 `jobs` table 已存在
   (migration `0001_01_01_000002`),且 production 需有 worker(`php artisan queue:work`)在跑才會消化。
 
@@ -97,4 +97,4 @@ base_branches: [dev, development]
 - ❌ 不要在 production code 留 `dd()` / `dump()` / `var_dump()` / debug log
 - ❌ 不要在 config 檔以外直接呼叫 `env()`(`config:cache` 後會回 null)
 - ❌ 不要手動修改資料庫 schema,一律走 migration
-- ❌ 不要假設測試 DB == 本機 DB(測試是 SQLite,本機是 MySQL)
+- ❌ 不要使用 SQLite 不支援的 DB 專屬語法(本機與測試都是 SQLite)
