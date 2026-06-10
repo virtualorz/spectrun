@@ -161,27 +161,44 @@
   </div>
 
   <div class="card">
-    <!-- step indicator -->
-    <div class="steps">
-      <div class="step active" id="st1"><span class="n">1</span>連接 GitHub</div>
-      <div class="bar"></div>
-      <div class="step" id="st2"><span class="n">2</span>選擇 repository</div>
-    </div>
+    <h1 class="h1">首次設定</h1>
+    <p class="lede">設定一組本站登入帳密,並貼上唯讀的 GitHub Personal Access Token(以 APP_KEY 加密儲存)。</p>
 
-    <!-- ===== STEP 1 ===== -->
-    <section id="s1">
-      <h1 class="h1">連接你的 GitHub</h1>
-      <p class="lede">Spectrum 需要一組唯讀的存取權杖,才能定期讀取 repo 裡的 specflow 開發記錄並分析。</p>
+    <form method="POST" action="{{ route('setup.store') }}">
+      @csrf
 
       <div class="field">
-        <label class="flabel" for="tok">Personal Access Token</label>
+        <label class="flabel" for="account">帳號</label>
         <div class="inwrap">
-          <input id="tok" type="password" placeholder="github_pat_… 或 ghp_…" autocomplete="off" spellcheck="false">
+          <input id="account" name="account" type="text" value="{{ old('account') }}" autocomplete="username" spellcheck="false">
+        </div>
+        @error('account')<div class="msg err show"><span>{{ $message }}</span></div>@enderror
+      </div>
+
+      <div class="field">
+        <label class="flabel" for="password">密碼</label>
+        <div class="inwrap">
+          <input id="password" name="password" type="password" autocomplete="new-password">
+        </div>
+        @error('password')<div class="msg err show"><span>{{ $message }}</span></div>@enderror
+      </div>
+
+      <div class="field">
+        <label class="flabel" for="password_confirmation">密碼確認</label>
+        <div class="inwrap">
+          <input id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password">
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="flabel" for="tok">GitHub Personal Access Token</label>
+        <div class="inwrap">
+          <input id="tok" name="access_token" type="password" value="{{ old('access_token') }}" placeholder="github_pat_… 或 ghp_…" autocomplete="off" spellcheck="false">
           <button class="eye" id="eye" type="button" aria-label="顯示/隱藏">
             <svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
         </div>
-        <div class="msg err" id="tokErr"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span id="tokErrTxt"></span></div>
+        @error('access_token')<div class="msg err show"><span>{{ $message }}</span></div>@enderror
 
         <details class="howto">
           <summary><svg class="chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>怎麼建立這個 token?(建議用 Fine-grained,最小權限)</summary>
@@ -202,160 +219,25 @@
         <span>這組 token 會以 <b>AES 加密</b>後存放在你自己的伺服器(使用 Spectrum 的 APP_KEY 加密),只用於讀取,<b>不會外傳</b>到任何第三方。</span>
       </div>
 
-      <button class="btn" id="verify"><span id="verifyTxt">驗證並連接</span></button>
-    </section>
-
-    <!-- ===== STEP 2 ===== -->
-    <section id="s2" class="hidden">
-      <div class="conn">
-        <div class="ava"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg></div>
-        <div class="who"><div class="u" id="ghUser">@@virtualorz</div><div class="r" id="ghRate">已連接 · API 額度 4,998 / 5,000</div></div>
-        <button class="change" id="changeTok">更換</button>
-      </div>
-
-      <div class="seclab">選擇要追蹤的 repository</div>
-      <div class="secsub">已自動偵測哪些 repo 含有 <span class="mono">specflow/</span> 目錄;只有含此目錄的 repo 能被分析。</div>
-
-      <div id="repoList"></div>
-
-      <div class="addrow">
-        <input id="addRepo" placeholder="手動加入 owner/repo" spellcheck="false">
-        <button id="addBtn" type="button">加入</button>
-      </div>
-
-      <div class="interval">
-        <div class="il">同步頻率<div class="s">背景排程多久去 GitHub 拉一次新記錄</div></div>
-        <select id="freq">
-          <option value="5">每 5 分鐘</option>
-          <option value="15" selected>每 15 分鐘</option>
-          <option value="30">每 30 分鐘</option>
-          <option value="60">每小時</option>
-        </select>
-      </div>
-
-      <div class="btnrow">
-        <button class="btn ghost" id="back" style="flex:.5">上一步</button>
-        <button class="btn" id="finish">完成設定,開始分析</button>
-      </div>
-    </section>
-
-    <!-- ===== DONE ===== -->
-    <section id="done" class="hidden">
-      <div class="done">
-        <div class="seal"><svg viewBox="0 0 24 24"><path d="M4 12.5l5 5 11-12"/></svg></div>
-        <h2>Spectrum 已就緒</h2>
-        <p>設定完成,第一次同步正在背景進行。</p>
-        <div class="summary">
-          <div class="sr"><span>連接帳號</span><b id="dUser">@@virtualorz</b></div>
-          <div class="sr"><span>追蹤的 repository</span><b id="dRepos">2 個</b></div>
-          <div class="sr"><span>同步頻率</span><b id="dFreq">每 15 分鐘</b></div>
-          <div class="sr"><span>Token 儲存</span><b>已加密 (AES)</b></div>
-        </div>
-        <div class="syncing"><span class="spin"></span>正在拉取首批 spec 記錄…</div>
-        <button class="btn" id="enter">進入 Spectrum</button>
-      </div>
-    </section>
+      <button class="btn" type="submit">完成設定</button>
+    </form>
   </div>
 
   <div class="foot">自架單體服務 · 資料只留在你自己的機器上</div>
 @endsection
 
 @push('scripts')
-@verbatim
 <script>
-const $=id=>document.getElementById(id);
-  const tok=$('tok');
-
-  // show / hide token
-  $('eye').onclick=()=>{tok.type = tok.type==='password' ? 'text' : 'password'; tok.focus();};
-
-  // ---- step 1: verify (simulated) ----
-  const CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M4 12.5l5 5 11-12"/></svg>';
-  function showErr(t){$('tokErrTxt').textContent=t;$('tokErr').classList.add('show');tok.classList.add('bad');}
-  function clearErr(){$('tokErr').classList.remove('show');tok.classList.remove('bad');}
-  tok.addEventListener('input',clearErr);
-
-  $('verify').onclick=()=>{
-    const v=tok.value.trim();
-    clearErr();
-    if(!v){showErr('請先貼上 token。');return;}
-    if(!/^(ghp_|github_pat_)/.test(v)||v.length<16){
-      showErr('token 格式看起來不對,應以 github_pat_ 或 ghp_ 開頭。');return;}
-    // simulate network verify
-    const btn=$('verify'); btn.disabled=true;
-    $('verifyTxt').textContent='驗證中…';
-    btn.insertAdjacentHTML('afterbegin','<span class="spin" id="vs"></span>');
-    setTimeout(()=>{
-      // success
-      const u = v.startsWith('github_pat_') ? '@virtualorz' : '@virtualorz';
-      $('ghUser').textContent=u; $('dUser').textContent=u;
-      $('ghRate').textContent='已連接 · API 額度 4,998 / 5,000';
-      gotoStep(2);
-      btn.disabled=false; $('verifyTxt').textContent='驗證並連接';
-      const vs=$('vs'); if(vs)vs.remove();
-    },950);
-  };
-
-  // ---- stepper nav ----
-  function gotoStep(n){
-    $('s1').classList.toggle('hidden', n!==1);
-    $('s2').classList.toggle('hidden', n!==2);
-    $('done').classList.toggle('hidden', n!==3);
-    $('st1').className='step '+(n>1?'done':(n===1?'active':''));
-    $('st2').className='step '+(n>2?'done':(n===2?'active':''));
-    window.scrollTo({top:0,behavior:'smooth'});
-  }
-  $('changeTok').onclick=()=>gotoStep(1);
-  $('back').onclick=()=>gotoStep(1);
-
-  // ---- step 2: repos ----
-  const repos=[
-    {full:'virtualorz/spectrum', priv:true,  flow:true},
-    {full:'virtualorz/specflow', priv:false, flow:true},
-    {full:'virtualorz/keepie',   priv:true,  flow:true},
-    {full:'virtualorz/neijin-tw',priv:true,  flow:false},
-    {full:'virtualorz/dotfiles', priv:false, flow:false}
-  ];
-  const selected=new Set(['virtualorz/spectrum','virtualorz/specflow']);
-
-  function renderRepos(){
-    $('repoList').innerHTML=repos.map(r=>{
-      const sel=selected.has(r.full);
-      const tags=`${r.priv?'<span class="tag priv">private</span>':'<span class="tag pub">public</span>'}`+
-                 `${r.flow?'<span class="tag has">含 specflow/</span>':'<span style="color:var(--faint)">無 specflow/ 目錄</span>'}`;
-      return `<div class="repo ${sel?'sel':''} ${r.flow?'':'noflow'}" data-r="${r.full}">
-        <div class="cb">${CHECK}</div>
-        <div class="info"><div class="rn">${r.full}</div><div class="rt">${tags}</div></div>
-      </div>`;
-    }).join('');
-    document.querySelectorAll('.repo').forEach(el=>{
-      el.onclick=()=>{
-        const f=el.dataset.r; const r=repos.find(x=>x.full===f);
-        if(!r.flow) return; // can't track repos without specflow/
-        selected.has(f)?selected.delete(f):selected.add(f);
-        renderRepos(); updateFinish();
+  // 顯示/隱藏 token
+  (function () {
+    var tok = document.getElementById('tok');
+    var eye = document.getElementById('eye');
+    if (eye && tok) {
+      eye.onclick = function () {
+        tok.type = tok.type === 'password' ? 'text' : 'password';
+        tok.focus();
       };
-    });
-  }
-  function updateFinish(){ $('finish').disabled = selected.size===0; }
-
-  $('addBtn').onclick=()=>{
-    const v=$('addRepo').value.trim();
-    if(!/^[\w.-]+\/[\w.-]+$/.test(v)){return;}
-    if(!repos.find(r=>r.full===v)){ repos.push({full:v,priv:true,flow:true}); }
-    selected.add(v); $('addRepo').value=''; renderRepos(); updateFinish();
-  };
-  $('addRepo').addEventListener('keydown',e=>{if(e.key==='Enter')$('addBtn').click();});
-
-  $('finish').onclick=()=>{
-    const f=$('freq'); 
-    $('dRepos').textContent=selected.size+' 個';
-    $('dFreq').textContent=f.options[f.selectedIndex].text;
-    gotoStep(3);
-  };
-  $('enter').onclick=()=>{ $('enter').textContent='載入中…'; };
-
-  renderRepos(); updateFinish();
+    }
+  })();
 </script>
-@endverbatim
 @endpush

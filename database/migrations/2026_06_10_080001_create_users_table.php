@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('github_username');
+            $table->string('github_username')->nullable(); // 接 GitHub API 後回填
             $table->unsignedBigInteger('github_user_id')->nullable();
             $table->string('avatar_url')->nullable();
             $table->text('access_token'); // 使用者輸入後由 Eloquent encrypted cast 加密儲存
