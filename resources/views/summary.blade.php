@@ -100,7 +100,7 @@
 <div class="wrap">
   <div class="top">
     <x-brand />
-    <div class="top-right"><span class="demo">范例資料</span><button class="icbtn" id="theme" aria-label="切換亮暗主題">◐</button></div>
+    <div class="top-right"><x-user-menu /><button class="icbtn" id="theme" aria-label="切換亮暗主題">◐</button></div>
   </div>
   <div class="shell">
     <aside class="side"><div class="sidelab">專案</div><nav id="nav"></nav></aside>
