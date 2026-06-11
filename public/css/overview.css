@@ -1,0 +1,82 @@
+/* 由 0007 從對應 blade 的 <style> 抽出;共用部分見 spectrum.css */
+  :root{
+    --bg:#0E131B;--panel:#151C26;--panel-2:#1A2230;--inset:#10161F;
+    --line:#283341;--line-2:#1E2630;--ink:#E9EEF5;--dim:#97A3B4;--faint:#5E6A7B;
+    --accent:#56B6E6;--accent-soft:rgba(86,182,230,.14);
+    --run:#E0A33E;--run-soft:rgba(224,163,62,.20);
+    --ph1:#6C7CA8;--ph2:#9B7DD6;--ph3:#3FB984;--done-soft:rgba(63,185,132,.15);
+    --radius:12px;--radius-sm:8px;
+    --mono:"SF Mono","JetBrains Mono","Fira Code",ui-monospace,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  }
+  html.light{--bg:#F4F6F8;--panel:#FFF;--panel-2:#FAFBFC;--inset:#EFF2F5;
+    --line:#E1E5EB;--line-2:#EBEEF2;--ink:#19212E;--dim:#5A6676;--faint:#96A0AF;
+    --accent:#1E84C7;--accent-soft:rgba(30,132,199,.10);--run:#B9791A;--run-soft:rgba(185,121,26,.18);
+    --ph1:#7888B5;--ph2:#8A66C9;--ph3:#1E9E6E;--done-soft:rgba(30,158,110,.12);}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:920px;margin:0 auto;padding:24px 20px 80px}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+  .top-right{display:flex;align-items:center;gap:8px}
+  .demo{font-size:11px;font-weight:600;color:var(--run);background:var(--run-soft);padding:5px 9px;border-radius:99px}
+
+  .crumb{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:18px;color:var(--dim)}
+  .crumb a{color:var(--dim);cursor:pointer;text-decoration:none}
+  .crumb a:hover{color:var(--accent)}
+  .crumb .sep{color:var(--faint)}
+  .crumb .cur{color:var(--ink)}
+
+  .search{margin-bottom:16px}
+  .search input{width:100%;height:38px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-sm);color:var(--ink);font-family:var(--sans);font-size:14px;padding:0 12px}
+  .search input:focus{outline:none;border-color:var(--accent)}
+  .search input::placeholder{color:var(--faint)}
+
+  .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+  .pcard{background:var(--panel);border:1px solid var(--line-2);border-radius:var(--radius);padding:16px 18px;cursor:pointer;transition:border-color .15s}
+  .pcard:hover{border-color:var(--accent)}
+  .pcard .pn{font-size:16px;font-weight:600;margin-bottom:3px}
+  .pcard .pt{font-family:var(--mono);font-size:11px;color:var(--faint);margin-bottom:14px}
+  .pcard .pstats{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;margin-bottom:14px}
+  .pcard .ps .l{font-size:11px;color:var(--dim);margin-bottom:2px}
+  .pcard .ps .v{font-family:var(--mono);font-size:18px;font-weight:600}
+  .pcard .ps .v.g{color:var(--ph3)}
+  .spark{display:flex;align-items:flex-end;gap:3px;height:30px;margin-bottom:10px}
+  .spark .b{flex:1;background:var(--accent);border-radius:2px 2px 0 0;opacity:.8;min-height:3px}
+  .spark .b.run{background:var(--run)}
+  .pcard .act{font-size:11.5px;color:var(--faint);display:flex;align-items:center;gap:6px}
+  .pcard .act b{color:var(--dim);font-weight:500}
+
+  /* project view reuses compact issue cards */
+  .phead{display:flex;align-items:baseline;gap:10px;margin-bottom:4px;flex-wrap:wrap}
+  .phead h2{margin:0;font-size:19px;font-weight:600}
+  .phead .tech{font-family:var(--mono);font-size:11px;color:var(--dim);border:1px solid var(--line);padding:2px 8px;border-radius:99px}
+  .psum{font-size:13px;color:var(--dim);margin-bottom:18px}
+  .psum b{color:var(--ink);font-family:var(--mono)}
+
+  .issue{background:var(--panel);border:1px solid var(--line-2);border-radius:var(--radius);margin-bottom:10px;overflow:hidden}
+  .issue:hover{border-color:var(--line)}.issue.open{border-color:var(--accent)}
+  .ihead{width:100%;display:flex;align-items:stretch;text-align:left;background:none;border:none;cursor:pointer;color:inherit;font-family:var(--sans);padding:0}
+  .ihead:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .hero{width:120px;flex:none;border-right:1px solid var(--line-2);padding:14px;display:flex;flex-direction:column;justify-content:center;gap:2px;background:var(--panel-2)}
+  .hero .big{font-family:var(--mono);font-size:24px;font-weight:600;line-height:1}.hero .big.run{font-size:16px;color:var(--run)}
+  .hero .unit{font-size:11px;color:var(--faint)}.hero .range{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:4px}
+  .mbody{flex:1;padding:13px 18px;min-width:0}
+  .mrow1{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:5px}
+  .iid{font-family:var(--mono);font-size:12.5px;color:var(--dim)}.iid b{color:var(--ink);font-weight:600}
+  .badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:99px;white-space:nowrap}
+  .badge.closed{color:var(--ph3);background:var(--done-soft)}.badge.running{color:var(--run);background:var(--run-soft)}
+  .ititle{font-size:15px;font-weight:600;margin-bottom:11px}
+  .segwrap{display:flex;align-items:center;gap:10px}
+  .segbar{display:flex;flex:1;height:8px;border-radius:99px;overflow:hidden;background:var(--inset)}
+  .sg{display:block;height:100%}.sg1{background:var(--ph1)}.sg2{background:var(--ph2)}.sg3{background:var(--ph3)}
+  .sg-open{flex:1;background:repeating-linear-gradient(45deg,var(--run-soft),var(--run-soft) 4px,transparent 4px,transparent 8px);border-right:2px solid var(--run)}
+  .seghint{font-size:11px;color:var(--faint);white-space:nowrap}
+  .detail{border-top:1px solid var(--line-2);padding:16px 18px 18px;display:none}.issue.open .detail{display:block}
+  .dsec{margin-bottom:14px}.dsec:last-child{margin-bottom:0}
+  .dlab{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);margin-bottom:7px}
+  .dprose{font-size:13.5px;color:var(--dim);line-height:1.65}
+  .clist{display:flex;flex-direction:column;gap:6px}
+  .citem{display:flex;gap:9px;font-size:13.5px;color:var(--dim)}.citem .ck{flex:none;width:16px;height:16px;margin-top:1px}
+  .citem .ck.done{color:var(--ph3)}.citem .ck.todo{color:var(--faint)}.citem .ck svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8}
+  .files{display:flex;flex-wrap:wrap;gap:6px}.fpath{font-family:var(--mono);font-size:11.5px;color:var(--dim);background:var(--inset);padding:3px 9px;border-radius:6px}
+  .note{font-size:13px;color:var(--dim);line-height:1.6;background:var(--inset);border-left:2px solid var(--line);padding:10px 12px;border-radius:0 6px 6px 0}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
