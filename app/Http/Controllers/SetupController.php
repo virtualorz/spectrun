@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Core\Dtos\User\CreateUserDto;
+use App\Core\Exceptions\GithubException;
 use App\Repositories\UserRepository;
+use App\Services\Github\GithubService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -12,6 +14,7 @@ class SetupController extends Controller
 {
     public function __construct(
         protected UserRepository $users,
+        protected GithubService $github,
     ) {}
 
     public function index(): View|RedirectResponse
@@ -36,12 +39,30 @@ class SetupController extends Controller
             'access_token' => 'required|string',
         ]);
 
+        $token = $validated['access_token'];
+
+        try {
+            // token 無效是預期結果 → 退回顯示錯誤,不寫入
+            if (! $this->github->verifyToken($token)) {
+                return back()->withErrors(['access_token' => 'GitHub token 無效'])->withInput();
+            }
+
+            $profile = $this->github->fetchUser($token);
+        } catch (GithubException $e) {
+            // GitHub 連線/上游問題(verifyToken 或 fetchUser 皆可能丟)→ 退回,不寫入
+            return back()->withErrors(['access_token' => 'GitHub 連線失敗,請稍後再試'])->withInput();
+        }
+
         $this->users->createFromSetup(new CreateUserDto(
             account: $validated['account'],
             password: $validated['password'],
-            accessToken: $validated['access_token'],
+            accessToken: $token,
+            githubUsername: $profile->login,
+            githubUserId: $profile->id,
+            avatarUrl: $profile->avatarUrl,
+            connectedAt: now(),
         ));
 
-        return redirect()->route('overview');
+        return redirect()->route('repository');
     }
 }
