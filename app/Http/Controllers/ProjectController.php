@@ -2,15 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Repositories\UserRepository;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class ProjectController extends Controller
 {
+    public function __construct(
+        protected UserRepository $users,
+    ) {}
+
     public function overview(): View|RedirectResponse
     {
-        if (User::query()->doesntExist()) {
+        if (! $this->users->hasAnyUser()) {
             return redirect()->route('setup');
         }
 

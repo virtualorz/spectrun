@@ -2,16 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Core\Dtos\User\CreateUserDto;
+use App\Repositories\UserRepository;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class SetupController extends Controller
 {
+    public function __construct(
+        protected UserRepository $users,
+    ) {}
+
     public function index(): View|RedirectResponse
     {
-        if (User::query()->exists()) {
+        if ($this->users->hasAnyUser()) {
             return redirect()->route('overview');
         }
 
@@ -21,7 +26,7 @@ class SetupController extends Controller
     public function setup(Request $request): RedirectResponse
     {
         // 首次設定保護:已設定就不再接受
-        if (User::query()->exists()) {
+        if ($this->users->hasAnyUser()) {
             return redirect()->route('overview');
         }
 
@@ -31,8 +36,11 @@ class SetupController extends Controller
             'access_token' => 'required|string',
         ]);
 
-        // password / access_token 由 User model 的 cast 自動雜湊 / 加密
-        User::create($validated);
+        $this->users->createFromSetup(new CreateUserDto(
+            account: $validated['account'],
+            password: $validated['password'],
+            accessToken: $validated['access_token'],
+        ));
 
         return redirect()->route('overview');
     }

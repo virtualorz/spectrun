@@ -67,7 +67,8 @@ base_branches: [dev, development]
 遵循 Laravel / PSR 預設,無特殊例外:
 
 - Class / 檔案名稱:`StudlyCase`(`UserController`、`CreateOrderAction`),一檔一類,PSR-4 對應 `App\` → `app/`
-- Method:`camelCase`
+- Method(public):`camelCase`
+- **非 public method(private / protected):`camelCase` 但以 `_` 開頭**(例:`private function _send()`、`protected function _normalize()`)
 - 變數 / 參數:`camelCase`
 - 資料庫表名:複數 `snake_case`(`users`、`order_items`)
 - 資料庫欄位:`snake_case`
@@ -111,6 +112,7 @@ base_branches: [dev, development]
 - ❌ 不要對 Repository 傳散參數/array——一律包成 `app/Core/Dtos/` 的 DTO 物件(§2)
 - ❌ 不要在 **controller method 內 `new` / 實例化 service**——一律 constructor DI 注入具體 service(§2)
 - ❌ 不要新增**沒有 interface 的 Service**——每個 service 都要 implements `app/Core/Contracts/{Module}/` 的 interface(§2)
+- ❌ 不要讓 **非 public method 沒有 `_` 前綴**——private/protected method 一律 `_` 開頭(§3)
 - ❌ 不要為了通過測試而修改測試斷言——測試紅了要修 code,不是改斷言
 - ❌ 不要在 production code 留 `dd()` / `dump()` / `var_dump()` / debug log
 - ❌ 不要在 config 檔以外直接呼叫 `env()`(`config:cache` 後會回 null)
