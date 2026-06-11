@@ -1,0 +1,31 @@
+/* 全站共用樣式(0007 由各頁 <style> 抽出)。
+   注意:CSS 變數 :root / html.light 由各頁自己的 css 提供(各頁 token 不完全相同),
+   本檔的 var() 會在各頁 :root 的脈絡下解析。 */
+
+*{box-sizing:border-box}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* brand(canonical,各頁右上 logo 統一) */
+.brand{display:flex;align-items:center;gap:10px}
+.spectrum-mark{display:flex;gap:2px;align-items:flex-end;height:18px}
+.spectrum-mark span{width:4px;border-radius:1px;display:block}
+.spectrum-mark span:nth-child(1){height:10px;background:var(--ph1)}
+.spectrum-mark span:nth-child(2){height:16px;background:var(--ph2)}
+.spectrum-mark span:nth-child(3){height:13px;background:var(--ph3)}
+.spectrum-mark span:nth-child(4){height:18px;background:var(--accent)}
+.brand b{font-family:var(--mono);font-size:18px;font-weight:600;letter-spacing:.01em}
+.brand .by{font-family:var(--mono);font-size:11px;color:var(--faint);margin-left:2px}
+
+/* icon button(主題切換等) */
+.icbtn{width:34px;height:34px;border-radius:99px;background:var(--panel);border:1px solid var(--line);color:var(--dim);cursor:pointer;font-size:15px}
+.icbtn:hover{color:var(--ink);border-color:var(--accent)}
+
+/* user menu(頭像 + 下拉) */
+.usermenu{position:relative}
+.usermenu .avatar{width:34px;height:34px;border-radius:99px;background:var(--panel-2,#1A2230);border:1px solid var(--line,#283341);color:var(--dim,#97A3B4);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.usermenu .avatar:hover{color:var(--ink);border-color:var(--accent)}
+.usermenu .avatar svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7}
+.usermenu .menu{position:absolute;right:0;top:42px;min-width:158px;background:var(--panel,#151C26);border:1px solid var(--line,#283341);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.25);padding:6px;display:none;z-index:50}
+.usermenu.open .menu{display:block}
+.usermenu .mi{display:block;padding:9px 11px;font-size:13px;color:var(--ink,#E9EEF5);text-decoration:none;border-radius:7px;white-space:nowrap}
+.usermenu .mi:hover{background:var(--inset,#10161F);color:var(--accent)}

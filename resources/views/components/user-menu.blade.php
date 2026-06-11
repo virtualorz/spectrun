@@ -9,19 +9,6 @@
 </div>
 
 @once
-@push('styles')
-<style>
-  /* 共用使用者選單(頭像 + 下拉),avatar_url 接 GitHub API 後可換成真實頭像 */
-  .usermenu{position:relative}
-  .usermenu .avatar{width:34px;height:34px;border-radius:99px;background:var(--panel-2,#1A2230);border:1px solid var(--line,#283341);color:var(--dim,#97A3B4);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
-  .usermenu .avatar:hover{color:var(--ink);border-color:var(--accent)}
-  .usermenu .avatar svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7}
-  .usermenu .menu{position:absolute;right:0;top:42px;min-width:158px;background:var(--panel,#151C26);border:1px solid var(--line,#283341);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.25);padding:6px;display:none;z-index:50}
-  .usermenu.open .menu{display:block}
-  .usermenu .mi{display:block;padding:9px 11px;font-size:13px;color:var(--ink,#E9EEF5);text-decoration:none;border-radius:7px;white-space:nowrap}
-  .usermenu .mi:hover{background:var(--inset,#10161F);color:var(--accent)}
-</style>
-@endpush
 @push('scripts')
 <script>
   (function () {
