@@ -27,7 +27,7 @@ class GithubService implements GithubServiceInterface
      */
     public function verifyToken(string $token): bool
     {
-        $response = $this->send($token, '/user');
+        $response = $this->_send($token, '/user');
 
         if ($response->status() === 401) {
             return false;
@@ -37,14 +37,14 @@ class GithubService implements GithubServiceInterface
             return true;
         }
 
-        $this->logWarning('/user', $response->status());
+        $this->_logWarning('/user', $response->status());
 
         throw GithubException::upstreamError("verifyToken 回 {$response->status()}");
     }
 
     public function fetchUser(string $token): GithubUserDto
     {
-        return GithubUserDto::fromApi($this->getJson($token, '/user'));
+        return GithubUserDto::fromApi($this->_getJson($token, '/user'));
     }
 
     /**
@@ -56,7 +56,7 @@ class GithubService implements GithubServiceInterface
         $page = 1;
 
         do {
-            $json = $this->getJson($token, '/user/repos', ['per_page' => 100, 'page' => $page]);
+            $json = $this->_getJson($token, '/user/repos', ['per_page' => 100, 'page' => $page]);
             foreach ($json as $repo) {
                 $repos[] = GithubRepoDto::fromApi($repo);
             }
@@ -68,7 +68,7 @@ class GithubService implements GithubServiceInterface
 
     public function fetchRepoContent(string $token, string $fullName, string $path = ''): GithubContentDto
     {
-        $json = $this->getJson($token, "/repos/{$fullName}/contents/".ltrim($path, '/'));
+        $json = $this->_getJson($token, "/repos/{$fullName}/contents/".ltrim($path, '/'));
 
         return GithubContentDto::fromApi($json);
     }
@@ -79,22 +79,22 @@ class GithubService implements GithubServiceInterface
      * @param  array<string, mixed>  $query
      * @return array<mixed>
      */
-    private function getJson(string $token, string $uri, array $query = []): array
+    private function _getJson(string $token, string $uri, array $query = []): array
     {
-        $response = $this->send($token, $uri, $query);
+        $response = $this->_send($token, $uri, $query);
 
         if ($response->status() === 401) {
-            $this->logWarning($uri, 401);
+            $this->_logWarning($uri, 401);
             throw GithubException::invalidToken();
         }
 
         if ($response->status() === 403 && $response->header('X-RateLimit-Remaining') === '0') {
-            $this->logWarning($uri, 403);
+            $this->_logWarning($uri, 403);
             throw GithubException::rateLimited();
         }
 
         if (! $response->successful()) {
-            $this->logWarning($uri, $response->status());
+            $this->_logWarning($uri, $response->status());
             throw GithubException::upstreamError("GET {$uri} 回 {$response->status()}");
         }
 
@@ -112,7 +112,7 @@ class GithubService implements GithubServiceInterface
      *
      * @param  array<string, mixed>  $query
      */
-    private function send(string $token, string $uri, array $query = []): Response
+    private function _send(string $token, string $uri, array $query = []): Response
     {
         $attempt = 0;
 
@@ -120,12 +120,12 @@ class GithubService implements GithubServiceInterface
             $attempt++;
 
             try {
-                $response = $this->client($token)->get($uri, $query);
+                $response = $this->_client($token)->get($uri, $query);
             } catch (ConnectionException $e) {
                 if ($attempt < 2) {
                     continue;
                 }
-                $this->logWarning($uri, 0);
+                $this->_logWarning($uri, 0);
                 throw GithubException::upstreamError('連線失敗:'.$e->getMessage());
             }
 
@@ -137,7 +137,7 @@ class GithubService implements GithubServiceInterface
         }
     }
 
-    private function client(string $token): PendingRequest
+    private function _client(string $token): PendingRequest
     {
         return Http::withToken($token)
             ->acceptJson()
@@ -146,7 +146,7 @@ class GithubService implements GithubServiceInterface
             ->withHeaders(['X-GitHub-Api-Version' => '2022-11-28']);
     }
 
-    private function logWarning(string $uri, int $status): void
+    private function _logWarning(string $uri, int $status): void
     {
         // 不記 token 內容,避免外洩
         Log::warning('GitHub API 失敗', ['endpoint' => $uri, 'status' => $status]);
