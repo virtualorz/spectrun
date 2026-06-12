@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Repositories\ProjectRepository;
 use App\Repositories\UserRepository;
+use App\Services\Ledger\LedgerService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -10,6 +12,8 @@ class ProjectController extends Controller
 {
     public function __construct(
         protected UserRepository $users,
+        protected ProjectRepository $projects,
+        protected LedgerService $ledger,
     ) {}
 
     public function overview(): View|RedirectResponse
@@ -18,7 +22,9 @@ class ProjectController extends Controller
             return redirect()->route('setup');
         }
 
-        return view('overview');
+        $projects = $this->ledger->build($this->projects->trackedWithChanges());
+
+        return view('overview', ['projects' => $projects]);
     }
 
     public function timeline(): View
