@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Core\Dtos\Project\CreateRepoDto;
 use App\Core\Exceptions\GithubException;
+use App\Models\Project;
+use App\Repositories\ProjectChangeRepository;
 use App\Repositories\ProjectRepository;
 use App\Repositories\UserRepository;
 use App\Services\Github\GithubService;
+use App\Services\Ledger\LedgerService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -20,6 +23,8 @@ class RepositoryController extends Controller
         protected UserRepository $users,
         protected GithubService $github,
         protected ProjectRepository $projects,
+        protected ProjectChangeRepository $changes,
+        protected LedgerService $ledger,
     ) {}
 
     /**
@@ -161,5 +166,81 @@ class RepositoryController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * 前端「同步專案資訊」按鈕:同步單一 project 的 specflow/changes → project_changes。
+     */
+    public function syncProjects(Request $request): RedirectResponse
+    {
+        $validated = $request->validate(['project' => 'required|integer']);
+
+        $project = $this->projects->find((int) $validated['project']);
+        if ($project === null || ! $project->is_tracked) {
+            return back()->withErrors(['sync' => '找不到該追蹤專案']);
+        }
+
+        $result = $this->_sync([$project]);
+
+        if ($result['aborted'] !== null) {
+            return back()->withErrors(['sync' => $result['aborted']]);
+        }
+
+        return back()->with('status', "已同步 {$result['changes']} 筆 change（成功 {$result['ok']} 個專案、失敗 {$result['failed']} 個）");
+    }
+
+    /**
+     * 同步一批 project(array 簽章通用、為日後 schedule/批次預留)。
+     * best-effort:單一 project / change 失敗跳過;rate limit / token 失效則中止。
+     *
+     * @param  array<int, Project>  $projects
+     * @return array{ok:int, failed:int, changes:int, aborted:?string}
+     */
+    private function _sync(array $projects): array
+    {
+        $token = $this->users->current()?->access_token;
+        $ok = 0;
+        $failed = 0;
+        $changeCount = 0;
+
+        foreach ($projects as $project) {
+            try {
+                $dtos = [];
+                foreach ($this->github->listSpecflowChanges($token, $project->full_name) as $dir) {
+                    [$number, $slug] = array_pad(explode('-', $dir, 2), 2, '');
+                    $base = "specflow/changes/{$dir}";
+
+                    $dtos[] = $this->ledger->parseChange(
+                        $number,
+                        $slug,
+                        $this->github->fetchFileRaw($token, $project->full_name, "{$base}/issue.md"),
+                        $this->github->fetchFileRaw($token, $project->full_name, "{$base}/design.md"),
+                        $this->github->fetchFileRaw($token, $project->full_name, "{$base}/task.md"),
+                    );
+                }
+
+                $this->changes->upsertForProject($project, $dtos);
+                $this->projects->markSynced($project);
+                $ok++;
+                $changeCount += count($dtos);
+            } catch (GithubException $e) {
+                // rate limit / token 失效是整體性問題 → 中止剩餘
+                if (in_array($e->reason, ['rate_limited', 'invalid_token'], true)) {
+                    return [
+                        'ok' => $ok,
+                        'failed' => $failed,
+                        'changes' => $changeCount,
+                        'aborted' => $e->reason === 'rate_limited'
+                            ? 'GitHub 額度用罄,已同步部分,請稍後再試'
+                            : 'GitHub token 失效,請重新設定',
+                    ];
+                }
+
+                // 單一 project 其他錯誤 → 跳過、繼續
+                $failed++;
+            }
+        }
+
+        return ['ok' => $ok, 'failed' => $failed, 'changes' => $changeCount, 'aborted' => null];
     }
 }

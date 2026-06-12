@@ -157,6 +157,80 @@ class GithubService implements GithubServiceInterface
     }
 
     /**
+     * 列出 repo 的 specflow/changes/ 下的子目錄名(0001-xxx…)。
+     * 404 / 無 → 空陣列;401/403-rate/5xx → GithubException。
+     *
+     * @return array<int, string>
+     */
+    public function listSpecflowChanges(string $token, string $fullName): array
+    {
+        $uri = "/repos/{$fullName}/contents/specflow/changes";
+        $response = $this->_send($token, $uri);
+
+        if ($response->status() === 404) {
+            return [];
+        }
+
+        if ($response->status() === 401) {
+            $this->_logWarning($uri, 401);
+            throw GithubException::invalidToken();
+        }
+
+        if ($response->status() === 403 && $response->header('X-RateLimit-Remaining') === '0') {
+            $this->_logWarning($uri, 403);
+            throw GithubException::rateLimited();
+        }
+
+        if (! $response->successful()) {
+            $this->_logWarning($uri, $response->status());
+            throw GithubException::upstreamError("listSpecflowChanges 回 {$response->status()}");
+        }
+
+        return collect($response->json())
+            ->where('type', 'dir')
+            ->pluck('name')
+            ->values()
+            ->all();
+    }
+
+    /**
+     * 讀任意檔的原始內容(容錯:檔不存在回 null)。
+     * 404 → null;401/403-rate/5xx → GithubException。
+     */
+    public function fetchFileRaw(string $token, string $fullName, string $path): ?string
+    {
+        $uri = "/repos/{$fullName}/contents/".ltrim($path, '/');
+        $response = $this->_send($token, $uri);
+
+        if ($response->status() === 404) {
+            return null;
+        }
+
+        if ($response->status() === 401) {
+            $this->_logWarning($uri, 401);
+            throw GithubException::invalidToken();
+        }
+
+        if ($response->status() === 403 && $response->header('X-RateLimit-Remaining') === '0') {
+            $this->_logWarning($uri, 403);
+            throw GithubException::rateLimited();
+        }
+
+        if (! $response->successful()) {
+            $this->_logWarning($uri, $response->status());
+            throw GithubException::upstreamError("fetchFileRaw 回 {$response->status()}");
+        }
+
+        $content = $response->json('content');
+
+        if (! is_string($content)) {
+            return null;
+        }
+
+        return base64_decode(str_replace("\n", '', $content)) ?: null;
+    }
+
+    /**
      * 取 JSON;依降級策略把錯誤轉成 GithubException。
      *
      * @param  array<string, mixed>  $query

@@ -22,4 +22,11 @@ interface GithubServiceInterface
     public function hasSpecflowDir(string $token, string $fullName): bool;
 
     public function fetchProjectMd(string $token, string $fullName): ?string;
+
+    /**
+     * @return array<int, string>
+     */
+    public function listSpecflowChanges(string $token, string $fullName): array;
+
+    public function fetchFileRaw(string $token, string $fullName, string $path): ?string;
 }

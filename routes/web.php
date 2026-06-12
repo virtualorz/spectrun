@@ -14,6 +14,7 @@ Route::post('/setup', [SetupController::class, 'setup'])->name('setup.store');
 
 Route::get('/repository', [RepositoryController::class, 'repository'])->name('repository');
 Route::post('/repository', [RepositoryController::class, 'handleRepository'])->name('repository.store');
+Route::post('/repository/sync', [RepositoryController::class, 'syncProjects'])->name('repository.sync');
 
 // 靜態預覽頁(登入功能屬後續)
 Route::view('/login', 'login')->name('login');
