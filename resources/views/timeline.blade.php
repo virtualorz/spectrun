@@ -12,7 +12,7 @@
     <x-brand />
     <div class="top-right">
       <x-user-menu />
-      <a class="icbtn" href="{{ route('summary') }}" aria-label="切換到摘要" title="切換到摘要">
+      <a class="icbtn" href="{{ ($projectId ?? null) ? route('summary', $projectId) : '#' }}" aria-label="切換到摘要" title="切換到摘要">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
       </a>
       <button class="icbtn" type="button" disabled aria-label="同步專案資訊" title="同步功能即將推出">

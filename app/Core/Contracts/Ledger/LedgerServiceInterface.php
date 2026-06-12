@@ -26,4 +26,11 @@ interface LedgerServiceInterface
         ?string $designMd,
         ?string $taskMd,
     ): ProjectChangeDto;
+
+    /**
+     * 整理單一 project 的 summary 顯示資料。
+     *
+     * @return array{header: ?array<string, mixed>, changes: array<int, array<string, mixed>>}
+     */
+    public function summaryFor(?Project $project): array;
 }
