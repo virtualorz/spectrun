@@ -12,6 +12,9 @@
     <x-brand />
     <div class="top-right">
       <x-user-menu />
+      <select id="branchSel" data-project="{{ $projectId }}" title="specflow 分支" style="height:34px;border-radius:8px">
+        <option value="">分支…</option>
+      </select>
       <a class="icbtn" href="{{ route('timeline', $projectId) }}" aria-label="切換到時間軸" title="切換到時間軸">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
       </a>
@@ -68,6 +71,47 @@
 @push('scripts')
 <script>
 (function () {
+  // ── specflow 分支下拉(lazy 載入 + 改選存檔)──
+  var sel = document.getElementById('branchSel');
+  var bmsg = document.getElementById('syncMsg');
+  if (sel) {
+    var pid = sel.dataset.project;
+    var loaded = false;
+    var load = function () {
+      if (loaded) return;
+      loaded = true;
+      fetch('{{ url('repository') }}/' + pid + '/branches', { headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d.branches) return;
+          sel.innerHTML = '';
+          d.branches.forEach(function (b) {
+            var o = document.createElement('option');
+            o.value = b; o.textContent = b;
+            if (b === d.current) o.selected = true;
+            sel.appendChild(o);
+          });
+        }).catch(function () { loaded = false; });
+    };
+    sel.addEventListener('focus', load);
+    sel.addEventListener('change', function () {
+      var branch = sel.value;
+      if (!branch) return;
+      fetch('{{ url('repository') }}/' + pid + '/branch', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ branch: branch })
+      }).then(function (r) {
+        if (!r.ok) throw new Error();
+        bmsg.style.display = 'block';
+        bmsg.textContent = 'specflow 分支已設為 ' + branch + ',按右上同步重新拉取。';
+      }).catch(function () {
+        bmsg.style.display = 'block';
+        bmsg.textContent = '分支設定失敗,請稍後再試。';
+      });
+    });
+  }
+
   var btn = document.getElementById('syncBtn');
   var msg = document.getElementById('syncMsg');
   if (!btn) return;

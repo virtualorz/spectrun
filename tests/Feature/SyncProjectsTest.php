@@ -153,4 +153,41 @@ class SyncProjectsTest extends TestCase
             ->assertJson(['error' => '找不到該追蹤專案']);
         $this->assertSame(0, ProjectChange::query()->count());
     }
+
+    public function test_sync_reads_specflow_branch(): void
+    {
+        $this->makeUser();
+        $project = Project::create([
+            'full_name' => 'octocat/demo',
+            'display_name' => 'octocat/demo',
+            'is_private' => false,
+            'default_branch' => 'main',
+            'specflow_branch' => 'development',
+            'has_specflow' => true,
+            'is_tracked' => true,
+        ]);
+
+        $issue = "---\ncreated_at: 2026-06-01T10:00:00+00:00\n---\n\n# Issue: 分支測試 (0001-foo)\n\n## 想解決的問題\n\nQ\n";
+
+        // 只有帶 ref=development 才回 changes;其他分支(含預設)回 404
+        Http::fake(function ($request) use ($issue) {
+            $url = $request->url();
+            $onDev = str_contains($url, 'ref=development');
+
+            if ($onDev && str_contains($url, '0001-foo/issue.md')) {
+                return Http::response(['content' => base64_encode($issue)], 200);
+            }
+            if ($onDev && str_contains($url, '/contents/specflow/changes')) {
+                return Http::response([['name' => '0001-foo', 'type' => 'dir']], 200);
+            }
+
+            return Http::response([], 404);
+        });
+
+        $this->postJson('/repository/sync', ['project' => $project->id])
+            ->assertOk()
+            ->assertJson(['changes' => 1]);
+
+        $this->assertDatabaseHas('project_changes', ['project_id' => $project->id, 'number' => '0001']);
+    }
 }

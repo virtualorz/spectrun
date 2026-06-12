@@ -19,14 +19,19 @@ interface GithubServiceInterface
 
     public function fetchRepoContent(string $token, string $fullName, string $path = ''): GithubContentDto;
 
-    public function hasSpecflowDir(string $token, string $fullName): bool;
+    public function hasSpecflowDir(string $token, string $fullName, ?string $ref = null): bool;
 
-    public function fetchProjectMd(string $token, string $fullName): ?string;
+    public function fetchProjectMd(string $token, string $fullName, ?string $ref = null): ?string;
 
     /**
      * @return array<int, string>
      */
-    public function listSpecflowChanges(string $token, string $fullName): array;
+    public function listSpecflowChanges(string $token, string $fullName, ?string $ref = null): array;
 
-    public function fetchFileRaw(string $token, string $fullName, string $path): ?string;
+    public function fetchFileRaw(string $token, string $fullName, string $path, ?string $ref = null): ?string;
+
+    /**
+     * @return array<int, string>
+     */
+    public function listBranches(string $token, string $fullName): array;
 }
