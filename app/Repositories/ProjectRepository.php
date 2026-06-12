@@ -26,6 +26,16 @@ class ProjectRepository
         return Project::query()->where('is_tracked', true)->with('changes')->get();
     }
 
+    public function find(int $id): ?Project
+    {
+        return Project::query()->find($id);
+    }
+
+    public function markSynced(Project $project): void
+    {
+        $project->forceFill(['last_synced_at' => now()])->save();
+    }
+
     public function addTracked(CreateRepoDto $dto): Project
     {
         return Project::updateOrCreate(
