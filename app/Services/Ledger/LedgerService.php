@@ -218,4 +218,59 @@ class LedgerService implements LedgerServiceInterface
             return null;
         }
     }
+
+    /**
+     * 整理單一 project 的 summary 顯示資料(segbar/tokens/status);不碰 DB(§2 rule 3)。
+     *
+     * @return array{header: ?array<string, mixed>, changes: array<int, array<string, mixed>>}
+     */
+    public function summaryFor(?Project $project): array
+    {
+        if ($project === null) {
+            return ['header' => null, 'changes' => []];
+        }
+
+        $changes = $project->changes;
+
+        return [
+            'header' => [
+                'display_name' => $project->display_name ?? $project->full_name,
+                'full_name' => $project->full_name,
+                'tech_stack' => $project->tech_stack,
+                'total' => $changes->count(),
+                'closed' => $changes->where('status', 'closed')->count(),
+                'tokens' => $changes->sum(fn (ProjectChange $c): int => (int) ($c->tokens_at_close ?? $c->tokens_at_new ?? 0)),
+            ],
+            'changes' => $changes->sortBy('number')->values()->map(fn (ProjectChange $c): array => [
+                'number' => $c->number,
+                'title' => $c->title,
+                'status' => $c->status,
+                'tokens' => (int) ($c->tokens_at_close ?? $c->tokens_at_new ?? 0),
+                'seg' => $this->_segments($c),
+            ])->all(),
+        ];
+    }
+
+    /**
+     * 由時間戳算 segbar 三段秒數:spec(issued→designed)、design(designed→ran)、impl(ran→closed??now)。
+     *
+     * @return array{spec:int, design:int, impl:int}
+     */
+    private function _segments(ProjectChange $change): array
+    {
+        return [
+            'spec' => $this->_span($change->issued_at, $change->designed_at),
+            'design' => $this->_span($change->designed_at, $change->ran_at),
+            'impl' => $this->_span($change->ran_at, $change->closed_at ?? now()),
+        ];
+    }
+
+    private function _span(?\DateTimeInterface $from, ?\DateTimeInterface $to): int
+    {
+        if ($from === null || $to === null) {
+            return 0;
+        }
+
+        return (int) abs(Carbon::parse($from)->diffInSeconds(Carbon::parse($to)));
+    }
 }

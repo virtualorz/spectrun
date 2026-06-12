@@ -27,13 +27,37 @@ class ProjectController extends Controller
         return view('overview', ['projects' => $projects]);
     }
 
-    public function timeline(): View
+    public function timeline(?string $project = null): View|RedirectResponse
     {
-        return view('timeline');
+        if (! $this->users->hasAnyUser()) {
+            return redirect()->route('setup');
+        }
+
+        // timeline 仍是 demo;只為「切換到摘要」連結準備一個有效的 project id
+        $projectId = $project !== null
+            ? (int) $project
+            : $this->projects->trackedWithChanges()->first()?->id;
+
+        return view('timeline', ['projectId' => $projectId]);
     }
 
-    public function summary(): View
+    public function summary(string $project): View|RedirectResponse
     {
-        return view('summary');
+        if (! $this->users->hasAnyUser()) {
+            return redirect()->route('setup');
+        }
+
+        $all = $this->projects->trackedWithChanges();
+        $selected = $all->firstWhere('id', (int) $project);
+
+        if ($selected === null) {
+            abort(404);
+        }
+
+        return view('summary', [
+            'nav' => $all,
+            'selected' => $this->ledger->summaryFor($selected),
+            'projectId' => $selected->id,
+        ]);
     }
 }
