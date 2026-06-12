@@ -11,6 +11,8 @@ Route::get('/summary', [ProjectController::class, 'summary'])->name('summary');
 Route::get('/setup', [SetupController::class, 'index'])->name('setup');
 Route::post('/setup', [SetupController::class, 'setup'])->name('setup.store');
 
-// 靜態預覽頁(本回合先看版型,登入/repo 寫入屬後續)
+Route::get('/repository', [SetupController::class, 'repository'])->name('repository');
+Route::post('/repository', [SetupController::class, 'handleRepository'])->name('repository.store');
+
+// 靜態預覽頁(登入功能屬後續)
 Route::view('/login', 'login')->name('login');
-Route::view('/repository', 'repository')->name('repository');
