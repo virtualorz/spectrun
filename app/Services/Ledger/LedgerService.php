@@ -18,6 +18,7 @@ class LedgerService implements LedgerServiceInterface
     public function build(Collection $projects): array
     {
         return $projects->map(fn (Project $project): array => [
+            'id' => $project->id,
             'display_name' => $project->display_name ?? $project->full_name,
             'full_name' => $project->full_name,
             'tech_stack' => $project->tech_stack,

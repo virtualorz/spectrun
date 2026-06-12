@@ -23,7 +23,7 @@
         $closed = collect($changes)->where('status', 'closed')->count();
         $tokens = collect($changes)->sum(fn ($c) => (int) ($c['tokens_at_close'] ?? 0));
       @endphp
-      <div class="pcard">
+      <div class="pcard" role="link" tabindex="0" data-href="{{ route('summary', ['project' => $p['id']]) }}" style="cursor:pointer">
         <div class="pn">{{ $p['display_name'] }}</div>
         <div class="pt">{{ $p['tech_stack'] ?? $p['full_name'] }}</div>
 
@@ -61,3 +61,15 @@
   </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+  // 卡片點擊跳轉(用事件處理,避免 <a> 的連結配色影響卡片內文)
+  document.querySelectorAll('.pcard[data-href]').forEach(function (el) {
+    el.addEventListener('click', function () { window.location = el.dataset.href; });
+    el.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.location = el.dataset.href; }
+    });
+  });
+</script>
+@endpush
