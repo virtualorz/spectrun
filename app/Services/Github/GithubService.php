@@ -119,6 +119,44 @@ class GithubService implements GithubServiceInterface
     }
 
     /**
+     * 讀 repo 的 specflow/project.md 原始內容。
+     * 404 → null(沒有就是沒有);401/403-rate/5xx/逾時 → GithubException。
+     */
+    public function fetchProjectMd(string $token, string $fullName): ?string
+    {
+        $uri = "/repos/{$fullName}/contents/specflow/project.md";
+        $response = $this->_send($token, $uri);
+
+        if ($response->status() === 404) {
+            return null;
+        }
+
+        if ($response->status() === 401) {
+            $this->_logWarning($uri, 401);
+            throw GithubException::invalidToken();
+        }
+
+        if ($response->status() === 403 && $response->header('X-RateLimit-Remaining') === '0') {
+            $this->_logWarning($uri, 403);
+            throw GithubException::rateLimited();
+        }
+
+        if (! $response->successful()) {
+            $this->_logWarning($uri, $response->status());
+            throw GithubException::upstreamError("fetchProjectMd 回 {$response->status()}");
+        }
+
+        // GitHub contents API 的 content 是 base64(含換行),decode 前先去換行
+        $content = $response->json('content');
+
+        if (! is_string($content)) {
+            return null;
+        }
+
+        return base64_decode(str_replace("\n", '', $content)) ?: null;
+    }
+
+    /**
      * 取 JSON;依降級策略把錯誤轉成 GithubException。
      *
      * @param  array<string, mixed>  $query

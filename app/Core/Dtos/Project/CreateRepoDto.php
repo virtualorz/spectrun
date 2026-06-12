@@ -2,6 +2,8 @@
 
 namespace App\Core\Dtos\Project;
 
+use DateTimeInterface;
+
 readonly class CreateRepoDto
 {
     public function __construct(
@@ -9,6 +11,9 @@ readonly class CreateRepoDto
         public bool $isPrivate,
         public ?string $defaultBranch,
         public bool $hasSpecflow,
+        public ?string $displayName = null,
+        public ?string $techStack = null,
+        public ?DateTimeInterface $lastSyncedAt = null,
     ) {}
 
     /**
@@ -24,6 +29,9 @@ readonly class CreateRepoDto
             'default_branch' => $this->defaultBranch,
             'has_specflow' => $this->hasSpecflow,
             'is_tracked' => true,
+            'display_name' => $this->displayName,
+            'tech_stack' => $this->techStack,
+            'last_synced_at' => $this->lastSyncedAt,
         ];
     }
 }
