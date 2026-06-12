@@ -16,6 +16,16 @@ class ProjectRepository
         return Project::query()->where('is_tracked', true)->get();
     }
 
+    /**
+     * 追蹤中的專案,連同 changes 一起載入(eager load 避免 N+1)。
+     *
+     * @return Collection<int, Project>
+     */
+    public function trackedWithChanges(): Collection
+    {
+        return Project::query()->where('is_tracked', true)->with('changes')->get();
+    }
+
     public function addTracked(CreateRepoDto $dto): Project
     {
         return Project::updateOrCreate(
