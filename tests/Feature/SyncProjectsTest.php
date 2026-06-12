@@ -129,4 +129,28 @@ class SyncProjectsTest extends TestCase
             ->assertSessionHasErrors('sync');
         $this->assertSame(0, ProjectChange::query()->count());
     }
+
+    public function test_sync_returns_json_for_ajax(): void
+    {
+        $this->makeUser();
+        $project = $this->trackedProject();
+        $this->fakeFullChange();
+
+        $this->postJson('/repository/sync', ['project' => $project->id])
+            ->assertOk()
+            ->assertJson(['ok' => 1, 'failed' => 0, 'changes' => 1])
+            ->assertJsonPath('aborted', null);
+
+        $this->assertSame(1, $project->changes()->count());
+    }
+
+    public function test_sync_ajax_unknown_project_returns_404_json(): void
+    {
+        $this->makeUser();
+
+        $this->postJson('/repository/sync', ['project' => 999])
+            ->assertStatus(404)
+            ->assertJson(['error' => '找不到該追蹤專案']);
+        $this->assertSame(0, ProjectChange::query()->count());
+    }
 }

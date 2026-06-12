@@ -86,13 +86,25 @@
       method: 'POST',
       headers: {
         'X-CSRF-TOKEN': '{{ csrf_token() }}',
-        'Accept': 'text/html',
+        'Accept': 'application/json',
         'Content-Type': 'application/x-www-form-urlencoded'
       },
       body: new URLSearchParams({ project: pid })
     }).then(function (res) {
-      if (res.status >= 400) throw new Error('sync failed');
-      msg.innerHTML = '同步完成,點「重新整理」查看最新資料 ';
+      return res.json().then(function (d) { return { ok: res.ok, status: res.status, data: d }; });
+    }).then(function (r) {
+      var d = r.data || {};
+      if (!r.ok) {
+        msg.textContent = d.error || '同步失敗,請稍後再試';
+        return;
+      }
+      var txt = '已同步 ' + (d.changes || 0) + ' 筆 change(成功 ' + (d.ok || 0) + '、失敗 ' + (d.failed || 0) + ')';
+      if (d.aborted) {
+        txt += '。' + d.aborted;
+      } else if ((d.changes || 0) === 0) {
+        txt += '。抓到 0 筆 —— 該 repo 的 specflow/changes 可能不在預設分支、尚未推上 GitHub、或還沒有 change。';
+      }
+      msg.textContent = txt + ' ';
       var rb = document.createElement('button');
       rb.type = 'button';
       rb.className = 'icbtn';
