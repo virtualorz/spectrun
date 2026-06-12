@@ -18,4 +18,6 @@ interface GithubServiceInterface
     public function listRepos(string $token): array;
 
     public function fetchRepoContent(string $token, string $fullName, string $path = ''): GithubContentDto;
+
+    public function hasSpecflowDir(string $token, string $fullName): bool;
 }

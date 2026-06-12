@@ -74,6 +74,51 @@ class GithubService implements GithubServiceInterface
     }
 
     /**
+     * 偵測 repo 是否含 specflow/ 目錄。
+     *
+     * 回 false(不丟例外,避免單一 repo 拖垮整份清單)的情況:
+     * - 404:目錄不存在(預期)
+     * - 403 非 rate limit:對該 repo 無 contents 讀取權限(細粒度 PAT 缺 Contents 權限、
+     *   org SAML SSO 未授權、private 無 scope 等)→ 視為「無法判定 → 無 specflow」
+     *
+     * 丟 GithubException(整份清單該停)的情況:401 token 失效、403+rate limit、5xx/逾時。
+     */
+    public function hasSpecflowDir(string $token, string $fullName): bool
+    {
+        $uri = "/repos/{$fullName}/contents/specflow";
+        $response = $this->_send($token, $uri);
+
+        if ($response->status() === 200) {
+            return true;
+        }
+
+        if ($response->status() === 404) {
+            return false;
+        }
+
+        if ($response->status() === 401) {
+            $this->_logWarning($uri, 401);
+            throw GithubException::invalidToken();
+        }
+
+        if ($response->status() === 403) {
+            // 只有「額度用罄」才該中止整份清單;一般 403 是該 repo 權限問題 → 跳過不掛頁
+            if ($response->header('X-RateLimit-Remaining') === '0') {
+                $this->_logWarning($uri, 403);
+                throw GithubException::rateLimited();
+            }
+
+            $this->_logWarning($uri, 403);
+
+            return false;
+        }
+
+        $this->_logWarning($uri, $response->status());
+
+        throw GithubException::upstreamError("hasSpecflowDir 回 {$response->status()}");
+    }
+
+    /**
      * 取 JSON;依降級策略把錯誤轉成 GithubException。
      *
      * @param  array<string, mixed>  $query
