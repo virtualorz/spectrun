@@ -14,6 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 class RepositoryController extends Controller
 {
@@ -170,17 +171,24 @@ class RepositoryController extends Controller
 
     /**
      * 前端「同步專案資訊」按鈕:同步單一 project 的 specflow/changes → project_changes。
+     * AJAX(expectsJson)回 JSON;表單則維持 redirect。
      */
-    public function syncProjects(Request $request): RedirectResponse
+    public function syncProjects(Request $request): Response
     {
         $validated = $request->validate(['project' => 'required|integer']);
 
         $project = $this->projects->find((int) $validated['project']);
         if ($project === null || ! $project->is_tracked) {
-            return back()->withErrors(['sync' => '找不到該追蹤專案']);
+            return $request->expectsJson()
+                ? response()->json(['error' => '找不到該追蹤專案'], 404)
+                : back()->withErrors(['sync' => '找不到該追蹤專案']);
         }
 
         $result = $this->_sync([$project]);
+
+        if ($request->expectsJson()) {
+            return response()->json($result);
+        }
 
         if ($result['aborted'] !== null) {
             return back()->withErrors(['sync' => $result['aborted']]);
