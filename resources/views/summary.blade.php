@@ -10,7 +10,16 @@
 <div class="wrap">
   <div class="top">
     <x-brand />
-    <div class="top-right"><x-user-menu /><button class="icbtn" id="theme" aria-label="切換亮暗主題">◐</button></div>
+    <div class="top-right">
+      <x-user-menu />
+      <a class="icbtn" href="{{ route('timeline') }}" aria-label="切換到時間軸" title="切換到時間軸">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
+      </a>
+      <button class="icbtn" type="button" disabled aria-label="同步專案資訊" title="同步功能即將推出">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+      </button>
+      <button class="icbtn" id="theme" aria-label="切換亮暗主題">◐</button>
+    </div>
   </div>
   <div class="shell">
     <aside class="side"><div class="sidelab">專案</div><nav id="nav"></nav></aside>
