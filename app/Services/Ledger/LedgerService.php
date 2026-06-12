@@ -243,9 +243,17 @@ class LedgerService implements LedgerServiceInterface
             ],
             'changes' => $changes->sortBy('number')->values()->map(fn (ProjectChange $c): array => [
                 'number' => $c->number,
+                'slug' => $c->slug,
                 'title' => $c->title,
                 'status' => $c->status,
                 'tokens' => (int) ($c->tokens_at_close ?? $c->tokens_at_new ?? 0),
+                'decisions_done' => $c->decisions_done,
+                'decisions_total' => $c->decisions_total,
+                'tasks_done' => $c->tasks_done,
+                'tasks_total' => $c->tasks_total,
+                'discussion_count' => $c->discussion_count,
+                'issued_at' => $c->issued_at,
+                'closed_at' => $c->closed_at,
                 'seg' => $this->_segments($c),
             ])->all(),
         ];
