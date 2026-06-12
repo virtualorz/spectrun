@@ -38,10 +38,22 @@ class ProjectRepository
 
     public function addTracked(CreateRepoDto $dto): Project
     {
-        return Project::updateOrCreate(
-            ['full_name' => $dto->fullName],
-            $dto->toArray(),
-        );
+        $project = Project::firstOrNew(['full_name' => $dto->fullName]);
+        $values = $dto->toArray();
+
+        // 既有 project 不覆寫使用者選的 specflow_branch(只在新建時用預設)
+        if ($project->exists) {
+            unset($values['specflow_branch']);
+        }
+
+        $project->fill($values)->save();
+
+        return $project;
+    }
+
+    public function setSpecflowBranch(Project $project, string $branch): void
+    {
+        $project->forceFill(['specflow_branch' => $branch])->save();
     }
 
     /**

@@ -14,6 +14,7 @@ readonly class CreateRepoDto
         public ?string $displayName = null,
         public ?string $techStack = null,
         public ?DateTimeInterface $lastSyncedAt = null,
+        public ?string $specflowBranch = null,
     ) {}
 
     /**
@@ -32,6 +33,7 @@ readonly class CreateRepoDto
             'display_name' => $this->displayName,
             'tech_stack' => $this->techStack,
             'last_synced_at' => $this->lastSyncedAt,
+            'specflow_branch' => $this->specflowBranch ?? $this->defaultBranch,
         ];
     }
 }

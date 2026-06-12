@@ -66,6 +66,29 @@ class GithubService implements GithubServiceInterface
         return $repos;
     }
 
+    /**
+     * 列出 repo 的所有分支名。
+     *
+     * @return array<int, string>
+     */
+    public function listBranches(string $token, string $fullName): array
+    {
+        $names = [];
+        $page = 1;
+
+        do {
+            $json = $this->_getJson($token, "/repos/{$fullName}/branches", ['per_page' => 100, 'page' => $page]);
+            foreach ($json as $branch) {
+                if (isset($branch['name'])) {
+                    $names[] = (string) $branch['name'];
+                }
+            }
+            $page++;
+        } while (count($json) === 100);
+
+        return $names;
+    }
+
     public function fetchRepoContent(string $token, string $fullName, string $path = ''): GithubContentDto
     {
         $json = $this->_getJson($token, "/repos/{$fullName}/contents/".ltrim($path, '/'));
@@ -83,10 +106,10 @@ class GithubService implements GithubServiceInterface
      *
      * 丟 GithubException(整份清單該停)的情況:401 token 失效、403+rate limit、5xx/逾時。
      */
-    public function hasSpecflowDir(string $token, string $fullName): bool
+    public function hasSpecflowDir(string $token, string $fullName, ?string $ref = null): bool
     {
         $uri = "/repos/{$fullName}/contents/specflow";
-        $response = $this->_send($token, $uri);
+        $response = $this->_send($token, $uri, $this->_refQuery($ref));
 
         if ($response->status() === 200) {
             return true;
@@ -122,10 +145,10 @@ class GithubService implements GithubServiceInterface
      * 讀 repo 的 specflow/project.md 原始內容。
      * 404 → null(沒有就是沒有);401/403-rate/5xx/逾時 → GithubException。
      */
-    public function fetchProjectMd(string $token, string $fullName): ?string
+    public function fetchProjectMd(string $token, string $fullName, ?string $ref = null): ?string
     {
         $uri = "/repos/{$fullName}/contents/specflow/project.md";
-        $response = $this->_send($token, $uri);
+        $response = $this->_send($token, $uri, $this->_refQuery($ref));
 
         if ($response->status() === 404) {
             return null;
@@ -162,10 +185,10 @@ class GithubService implements GithubServiceInterface
      *
      * @return array<int, string>
      */
-    public function listSpecflowChanges(string $token, string $fullName): array
+    public function listSpecflowChanges(string $token, string $fullName, ?string $ref = null): array
     {
         $uri = "/repos/{$fullName}/contents/specflow/changes";
-        $response = $this->_send($token, $uri);
+        $response = $this->_send($token, $uri, $this->_refQuery($ref));
 
         if ($response->status() === 404) {
             return [];
@@ -197,10 +220,10 @@ class GithubService implements GithubServiceInterface
      * 讀任意檔的原始內容(容錯:檔不存在回 null)。
      * 404 → null;401/403-rate/5xx → GithubException。
      */
-    public function fetchFileRaw(string $token, string $fullName, string $path): ?string
+    public function fetchFileRaw(string $token, string $fullName, string $path, ?string $ref = null): ?string
     {
         $uri = "/repos/{$fullName}/contents/".ltrim($path, '/');
-        $response = $this->_send($token, $uri);
+        $response = $this->_send($token, $uri, $this->_refQuery($ref));
 
         if ($response->status() === 404) {
             return null;
@@ -228,6 +251,16 @@ class GithubService implements GithubServiceInterface
         }
 
         return base64_decode(str_replace("\n", '', $content)) ?: null;
+    }
+
+    /**
+     * 把 ref(branch)轉成 contents API 的 query;null/空 → 不帶(讀預設分支)。
+     *
+     * @return array<string, string>
+     */
+    private function _refQuery(?string $ref): array
+    {
+        return $ref !== null && $ref !== '' ? ['ref' => $ref] : [];
     }
 
     /**

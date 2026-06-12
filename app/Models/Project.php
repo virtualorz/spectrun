@@ -12,6 +12,7 @@ class Project extends Model
         'display_name',
         'tech_stack',
         'default_branch',
+        'specflow_branch',
         'is_private',
         'has_specflow',
         'is_tracked',

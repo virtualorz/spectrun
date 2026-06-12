@@ -10,6 +10,7 @@ use App\Repositories\ProjectRepository;
 use App\Repositories\UserRepository;
 use App\Services\Github\GithubService;
 use App\Services\Ledger\LedgerService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -50,7 +51,7 @@ class RepositoryController extends Controller
                         'full_name' => $repo->fullName,
                         'is_private' => $repo->private,
                         'default_branch' => $repo->defaultBranch,
-                        'has_specflow' => $this->github->hasSpecflowDir($user->access_token, $repo->fullName),
+                        'has_specflow' => $this->github->hasSpecflowDir($user->access_token, $repo->fullName, $repo->defaultBranch),
                         'language' => $repo->language,
                     ];
                 }
@@ -109,7 +110,7 @@ class RepositoryController extends Controller
             $techFromMd = null;
             if ($token !== null) {
                 try {
-                    $md = $this->github->fetchProjectMd($token, $fullName);
+                    $md = $this->github->fetchProjectMd($token, $fullName, $repo['default_branch']);
                     $techFromMd = $md !== null ? $this->_parseTechStack($md) : null;
                 } catch (GithubException $e) {
                     // 略過 enrich,用 fallback
@@ -124,6 +125,7 @@ class RepositoryController extends Controller
                 displayName: $fullName,                  // 初版 display_name = full_name
                 techStack: $techFromMd ?? $language,     // project.md 優先、language fallback
                 lastSyncedAt: now(),
+                specflowBranch: $repo['default_branch'], // 預設 specflow 分支 = repo 預設分支
             ));
         }
 
@@ -198,6 +200,45 @@ class RepositoryController extends Controller
     }
 
     /**
+     * 回傳該 project repo 的分支清單(給 summary 分支下拉 lazy 載入)。
+     */
+    public function branches(int $project): JsonResponse
+    {
+        $proj = $this->projects->find($project);
+        if ($proj === null || ! $proj->is_tracked) {
+            return response()->json(['error' => '找不到該追蹤專案'], 404);
+        }
+
+        try {
+            $branches = $this->github->listBranches($this->users->current()?->access_token, $proj->full_name);
+        } catch (GithubException $e) {
+            return response()->json(['error' => '無法載入分支,請稍後再試'], 502);
+        }
+
+        return response()->json([
+            'branches' => $branches,
+            'current' => $proj->specflow_branch ?? $proj->default_branch,
+        ]);
+    }
+
+    /**
+     * 設定該 project 的 specflow 分支。
+     */
+    public function setBranch(Request $request, int $project): JsonResponse
+    {
+        $validated = $request->validate(['branch' => 'required|string']);
+
+        $proj = $this->projects->find($project);
+        if ($proj === null || ! $proj->is_tracked) {
+            return response()->json(['error' => '找不到該追蹤專案'], 404);
+        }
+
+        $this->projects->setSpecflowBranch($proj, $validated['branch']);
+
+        return response()->json(['ok' => true, 'branch' => $validated['branch']]);
+    }
+
+    /**
      * 同步一批 project(array 簽章通用、為日後 schedule/批次預留)。
      * best-effort:單一 project / change 失敗跳過;rate limit / token 失效則中止。
      *
@@ -213,17 +254,18 @@ class RepositoryController extends Controller
 
         foreach ($projects as $project) {
             try {
+                $branch = $project->specflow_branch ?? $project->default_branch;
                 $dtos = [];
-                foreach ($this->github->listSpecflowChanges($token, $project->full_name) as $dir) {
+                foreach ($this->github->listSpecflowChanges($token, $project->full_name, $branch) as $dir) {
                     [$number, $slug] = array_pad(explode('-', $dir, 2), 2, '');
                     $base = "specflow/changes/{$dir}";
 
                     $dtos[] = $this->ledger->parseChange(
                         $number,
                         $slug,
-                        $this->github->fetchFileRaw($token, $project->full_name, "{$base}/issue.md"),
-                        $this->github->fetchFileRaw($token, $project->full_name, "{$base}/design.md"),
-                        $this->github->fetchFileRaw($token, $project->full_name, "{$base}/task.md"),
+                        $this->github->fetchFileRaw($token, $project->full_name, "{$base}/issue.md", $branch),
+                        $this->github->fetchFileRaw($token, $project->full_name, "{$base}/design.md", $branch),
+                        $this->github->fetchFileRaw($token, $project->full_name, "{$base}/task.md", $branch),
                     );
                 }
 

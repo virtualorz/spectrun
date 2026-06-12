@@ -116,4 +116,25 @@ class GithubServiceTest extends TestCase
             $this->assertSame('bad_response', $e->reason);
         }
     }
+
+    public function test_list_branches_returns_names(): void
+    {
+        Http::fake([
+            'api.github.com/repos/o/r/branches*' => Http::response([
+                ['name' => 'master', 'protected' => true],
+                ['name' => 'development', 'protected' => false],
+            ], 200),
+        ]);
+
+        $this->assertSame(['master', 'development'], $this->service()->listBranches('ghp_x', 'o/r'));
+    }
+
+    public function test_contents_methods_pass_ref(): void
+    {
+        Http::fake(['api.github.com/*' => Http::response(['content' => base64_encode('hi')], 200)]);
+
+        $this->service()->fetchFileRaw('ghp_x', 'o/r', 'specflow/changes/0001/issue.md', 'development');
+
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'ref=development'));
+    }
 }
