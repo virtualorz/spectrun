@@ -33,4 +33,11 @@ interface LedgerServiceInterface
      * @return array{header: ?array<string, mixed>, changes: array<int, array<string, mixed>>}
      */
     public function summaryFor(?Project $project): array;
+
+    /**
+     * 整理單一 project 的甘特圖時間軸資料。
+     *
+     * @return array{header: ?array<string, mixed>, changes: array<int, array<string, mixed>>, ticks: array<int, array<string, mixed>>}
+     */
+    public function timelineFor(?Project $project): array;
 }
