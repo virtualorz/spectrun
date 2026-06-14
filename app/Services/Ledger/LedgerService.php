@@ -281,4 +281,60 @@ class LedgerService implements LedgerServiceInterface
 
         return (int) abs(Carbon::parse($from)->diffInSeconds(Carbon::parse($to)));
     }
+
+    /**
+     * 整理單一 project 的甘特圖時間軸資料(每 change 的 left/width% + 日期軸 ticks);不碰 DB。
+     *
+     * @return array{header: ?array<string, mixed>, changes: array<int, array<string, mixed>>, ticks: array<int, array<string, mixed>>}
+     */
+    public function timelineFor(?Project $project): array
+    {
+        if ($project === null || $project->changes->isEmpty()) {
+            return ['header' => null, 'changes' => [], 'ticks' => []];
+        }
+
+        $changes = $project->changes->sortBy('number')->values();
+        $now = Carbon::now();
+
+        $starts = $changes->map(fn (ProjectChange $c) => $c->issued_at)->filter();
+        $ends = $changes->map(fn (ProjectChange $c) => $c->closed_at ?? $now)->filter();
+        $start = $starts->min() ?? $now;
+        $end = $ends->max() ?? $now;
+        $span = max(1, (int) abs(Carbon::parse($start)->diffInSeconds(Carbon::parse($end))));
+
+        $pct = fn (?\DateTimeInterface $t): float => $t === null
+            ? 0.0
+            : round(Carbon::parse($start)->diffInSeconds(Carbon::parse($t)) / $span * 100, 2);
+
+        return [
+            'header' => [
+                'display_name' => $project->display_name ?? $project->full_name,
+                'tech_stack' => $project->tech_stack,
+                'total' => $changes->count(),
+                'closed' => $changes->where('status', 'closed')->count(),
+            ],
+            'changes' => $changes->map(function (ProjectChange $c) use ($pct): array {
+                $issued = $c->issued_at;
+                $changeEnd = $c->closed_at ?? Carbon::now();
+                $left = $pct($issued);
+                $width = $issued === null ? 0.0 : max(0.5, round($pct($changeEnd) - $left, 2));
+
+                return [
+                    'number' => $c->number,
+                    'slug' => $c->slug,
+                    'title' => $c->title,
+                    'status' => $c->status,
+                    'tokens' => (int) ($c->tokens_at_close ?? $c->tokens_at_new ?? 0),
+                    'left' => $left,
+                    'width' => $width,
+                    'seg' => $this->_segments($c),
+                ];
+            })->all(),
+            'ticks' => collect(range(0, 4))->map(function (int $i) use ($start, $span): array {
+                $t = Carbon::parse($start)->addSeconds((int) ($span * $i / 4));
+
+                return ['label' => $t->format('m-d'), 'pct' => round($i / 4 * 100, 2)];
+            })->all(),
+        ];
+    }
 }

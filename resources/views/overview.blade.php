@@ -3,7 +3,7 @@
 @section('title', 'specflow ledger · 專案總覽層')
 
 @push('styles')
-<link rel="stylesheet" href="{{ asset('css/overview.css') }}">
+<link rel="stylesheet" href="{{ asset('css/overview.css') }}?v={{ filemtime(public_path('css/overview.css')) }}">
 @endpush
 
 @section('content')

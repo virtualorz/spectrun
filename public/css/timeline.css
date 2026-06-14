@@ -37,28 +37,32 @@
     .navitem.active{border-left:none;background:none;border-bottom-color:var(--accent)}
     .navitem.active .cnt{background:var(--accent-soft)}}
 
-  .legend{display:flex;align-items:center;gap:16px;font-size:12px;color:var(--dim);margin-bottom:6px;flex-wrap:wrap}
+  .legend{display:flex;align-items:center;justify-content:space-between;gap:16px;font-size:12px;color:var(--dim);margin-bottom:12px;flex-wrap:wrap}
+  .legend-l{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
   .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;transform:translateY(1px)}
+  #branchSel{font-family:var(--mono);font-size:11.5px;color:var(--dim);background:var(--inset);border:1px solid var(--line);border-radius:6px;padding:4px 8px;cursor:pointer;max-width:180px}
+  #branchSel:hover{color:var(--ink);border-color:var(--accent)}
   .hint{font-size:12px;color:var(--faint);margin-bottom:16px}
 
-  .gantt{display:flex;background:var(--panel);border:1px solid var(--line-2);border-radius:var(--radius);padding:12px 14px 14px;margin-bottom:18px;overflow:hidden}
+  #chart,.gantt{display:flex;background:var(--panel);border:1px solid var(--line-2);border-radius:var(--radius);padding:12px 14px 14px;margin-bottom:18px;overflow:hidden}
   .gutter{width:172px;flex:none}
   .ghdr{height:22px}
   .gcell{height:30px;display:flex;align-items:center;font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:10px;cursor:pointer}
   .gcell:hover{color:var(--ink)}
   .gcell.on{color:var(--accent)}
-  .gcell .gid{font-family:var(--mono);color:var(--faint);margin-right:6px}
+  .gcell .gid,.gcell b{font-family:var(--mono);color:var(--faint);margin-right:6px;font-weight:400}
   .gcell.on .gid{color:var(--accent)}
-  .plot{flex:1;position:relative;min-width:0}
+  .lane,.plot{flex:1;position:relative;min-width:0}
   .axis{position:relative;height:22px}
   .axis .tick{position:absolute;transform:translateX(-50%);font-family:var(--mono);font-size:10.5px;color:var(--faint);white-space:nowrap;top:2px}
   .bands{position:relative}
   .grid{position:absolute;top:0;bottom:0;width:1px;background:var(--line-2)}
-  .gbar{position:absolute;height:16px;min-width:6px;border-radius:4px;cursor:pointer;overflow:hidden;border:1px solid transparent}
+  .gbar{position:absolute;height:16px;min-width:6px;border-radius:4px;cursor:default;overflow:hidden;border:1px solid transparent;display:flex;background:var(--inset)}
   .gbar:hover{border-color:var(--accent)}
+  .gbar.run{box-shadow:inset -3px 0 0 var(--run)}
   .gbar.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
   .segbar{display:flex;width:100%;height:100%;background:var(--inset)}
-  .sg{display:block;height:100%}.sg1{background:var(--ph1)}.sg2{background:var(--ph2)}.sg3{background:var(--ph3)}
+  .sg{display:block;height:100%;min-width:0}.sg1{background:var(--ph1)}.sg2{background:var(--ph2)}.sg3{background:var(--ph3)}
   .sg-open{flex:1;min-width:10px;background:repeating-linear-gradient(45deg,var(--run-soft),var(--run-soft) 4px,transparent 4px,transparent 8px);border-right:2px solid var(--run)}
 
   .selbox{background:var(--panel);border:1px solid var(--accent);border-radius:var(--radius);padding:16px 18px}

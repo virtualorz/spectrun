@@ -3,7 +3,7 @@
 @section('title', 'Spectrum · 首次設定')
 
 @push('styles')
-<link rel="stylesheet" href="{{ asset('css/card.css') }}">
+<link rel="stylesheet" href="{{ asset('css/card.css') }}?v={{ filemtime(public_path('css/card.css')) }}">
 @endpush
 
 @section('content')
