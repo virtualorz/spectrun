@@ -18,50 +18,49 @@
   <div class="search"><input id="q" type="text" placeholder="搜尋專案…" autocomplete="off"></div>
 
   <div class="pgrid">
-    @forelse ($projects as $p)
-      @php
-        $bars = $p['spark'] ?? [];
-        $maxTok = collect($bars)->max('tokens') ?: 1;
-      @endphp
-      <div class="pcard" role="link" tabindex="0" data-href="{{ route('summary', $p['id']) }}" style="cursor:pointer">
-        <div class="pn">{{ $p['display_name'] }}</div>
-        <div class="pt">{{ $p['tech_stack'] ?? $p['full_name'] }}</div>
-
-        <div class="pstats">
-          <div class="ps"><div class="l">spec 總數</div><div class="v">{{ $p['stats']['total'] }}</div></div>
-          <div class="ps"><div class="l">已完成</div><div class="v g">{{ $p['stats']['closed'] }}</div></div>
-          <div class="ps"><div class="l">累計 token</div><div class="v">{{ number_format($p['stats']['tokens']) }}</div></div>
-          <div class="ps"><div class="l">累計跨度</div><div class="v">{{ $p['stats']['span_human'] }}</div></div>
-        </div>
-
-        <div class="spark">
-          @foreach ($bars as $b)
-            <div class="b {{ $b['running'] ? 'run' : '' }}" style="height:{{ max(3, (int) round($b['tokens'] / $maxTok * 30)) }}px"></div>
-          @endforeach
-        </div>
-
-        <div class="act">
-          <span>{{ $p['last_synced_at'] ? '最後同步 '.$p['last_synced_at']->format('Y-m-d H:i') : '尚未同步' }}</span>
-        </div>
-      </div>
-    @empty
-      <div class="psum" style="padding:48px;text-align:center">
-        <div class="big">尚未追蹤任何 repository</div>
-        <div class="unit">到 <a href="{{ route('repository') }}">Repository 設定頁</a> 勾選要追蹤的專案,這裡就會出現它們的 specflow 紀錄。</div>
-      </div>
-    @endforelse
+    @include('partials._project-cards', ['projects' => $projects])
   </div>
 </div>
 @endsection
 
 @push('scripts')
 <script>
-  // 卡片點擊跳轉(用事件處理,避免 <a> 的連結配色影響卡片內文)
-  document.querySelectorAll('.pcard[data-href]').forEach(function (el) {
-    el.addEventListener('click', function () { window.location = el.dataset.href; });
-    el.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.location = el.dataset.href; }
-    });
-  });
+  (function () {
+    var grid = document.querySelector('.pgrid');
+
+    // 卡片點擊跳轉(可重呼叫:搜尋替換 grid 後重新綁定)
+    function bindCards() {
+      grid.querySelectorAll('.pcard[data-href]').forEach(function (el) {
+        el.addEventListener('click', function () { window.location = el.dataset.href; });
+        el.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.location = el.dataset.href; }
+        });
+      });
+    }
+    bindCards();
+
+    // 搜尋框:輸入即搜(debounce ~250ms),回傳卡片 HTML 後替換 grid
+    var q = document.getElementById('q');
+    if (q) {
+      var timer = null;
+      q.addEventListener('input', function () {
+        clearTimeout(timer);
+        timer = setTimeout(function () {
+          fetch('{{ route('project.search') }}', {
+            method: 'POST',
+            headers: {
+              'X-CSRF-TOKEN': '{{ csrf_token() }}',
+              'Accept': 'text/html',
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({ keyword: q.value })
+          })
+            .then(function (r) { if (!r.ok) throw new Error(); return r.text(); })
+            .then(function (html) { grid.innerHTML = html; bindCards(); })
+            .catch(function () { /* 失敗靜默,保留現有結果 */ });
+        }, 250);
+      });
+    }
+  })();
 </script>
 @endpush
