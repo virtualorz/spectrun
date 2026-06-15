@@ -44,6 +44,9 @@ RUN chmod +x /usr/local/bin/entrypoint.sh \
 ENV APP_ENV=production \
     APP_DEBUG=false \
     LOG_CHANNEL=stderr \
+    SESSION_DRIVER=file \
+    CACHE_STORE=file \
+    QUEUE_CONNECTION=sync \
     DB_CONNECTION=sqlite \
     DB_DATABASE=/data/database.sqlite
 
