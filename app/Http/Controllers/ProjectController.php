@@ -6,6 +6,7 @@ use App\Repositories\ProjectRepository;
 use App\Repositories\UserRepository;
 use App\Services\Ledger\LedgerService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class ProjectController extends Controller
@@ -25,6 +26,21 @@ class ProjectController extends Controller
         $projects = $this->ledger->build($this->projects->trackedWithChanges());
 
         return view('overview', ['projects' => $projects]);
+    }
+
+    public function handleSearch(Request $request): View
+    {
+        if (! $this->users->hasAnyUser()) {
+            abort(403);
+        }
+
+        $keyword = trim((string) $request->input('keyword', ''));
+
+        $projects = $this->ledger->build(
+            $this->projects->trackedWithChanges($keyword !== '' ? $keyword : null)
+        );
+
+        return view('partials._project-cards', ['projects' => $projects, 'q' => $keyword]);
     }
 
     public function timeline(string $project): View|RedirectResponse

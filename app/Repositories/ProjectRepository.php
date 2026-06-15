@@ -18,12 +18,29 @@ class ProjectRepository
 
     /**
      * 追蹤中的專案,連同 changes 一起載入(eager load 避免 N+1)。
+     * 給 $keyword 時,以 like %kw% 過濾專案自身欄位或其 change 欄位(命中即保留該專案)。
      *
      * @return Collection<int, Project>
      */
-    public function trackedWithChanges(): Collection
+    public function trackedWithChanges(?string $keyword = null): Collection
     {
-        return Project::query()->where('is_tracked', true)->with('changes')->get();
+        $query = Project::query()->where('is_tracked', true)->with('changes');
+
+        $kw = $keyword !== null ? trim($keyword) : '';
+
+        if ($kw !== '') {
+            $query->where(function ($q) use ($kw) {
+                $q->where('full_name', 'like', "%{$kw}%")
+                    ->orWhere('display_name', 'like', "%{$kw}%")
+                    ->orWhere('tech_stack', 'like', "%{$kw}%")
+                    ->orWhereHas('changes', fn ($c) => $c
+                        ->where('slug', 'like', "%{$kw}%")
+                        ->orWhere('title', 'like', "%{$kw}%")
+                        ->orWhere('problem', 'like', "%{$kw}%"));
+            });
+        }
+
+        return $query->get();
     }
 
     public function find(int $id): ?Project

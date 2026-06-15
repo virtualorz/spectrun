@@ -6,6 +6,7 @@ use App\Http\Controllers\SetupController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [ProjectController::class, 'overview'])->name('overview');
+Route::post('/project/search', [ProjectController::class, 'handleSearch'])->name('project.search');
 Route::get('/timeline/{project}', [ProjectController::class, 'timeline'])->name('timeline');
 Route::get('/summary/{project}', [ProjectController::class, 'summary'])->name('summary');
 
