@@ -142,6 +142,76 @@ class GithubService implements GithubServiceInterface
     }
 
     /**
+     * 並行批次偵測多個 repo 是否含 specflow/ 目錄(用 Http::pool 一次併發)。
+     * 「盡力而為」:單一 repo 非 rate-limit 失敗 → false;偵測到 rate-limit 用罄 → rateLimited=true(不炸整批);401 → 丟例外。
+     *
+     * @param  array<int, array{full_name: string, ref?: ?string}>  $repos
+     * @return array{flags: array<string, bool>, rateLimited: bool}
+     */
+    public function detectSpecflowDirs(string $token, array $repos): array
+    {
+        if ($repos === []) {
+            return ['flags' => [], 'rateLimited' => false];
+        }
+
+        $responses = Http::pool(fn ($pool) => collect($repos)->map(
+            fn (array $r) => $pool->as($r['full_name'])
+                ->withToken($token)
+                ->acceptJson()
+                ->timeout(10)
+                ->baseUrl(self::BASE_URL)
+                ->withHeaders(['X-GitHub-Api-Version' => '2022-11-28'])
+                ->get("/repos/{$r['full_name']}/contents/specflow", $this->_refQuery($r['ref'] ?? null))
+        )->all());
+
+        $flags = [];
+        $rateLimited = false;
+
+        foreach ($repos as $r) {
+            $name = $r['full_name'];
+            $response = $responses[$name] ?? null;
+
+            // pool 回傳可能是連線例外物件,非 Response → 視為偵測失敗(false)
+            if (! $response instanceof Response) {
+                $this->_logWarning("/repos/{$name}/contents/specflow", 0);
+                $flags[$name] = false;
+
+                continue;
+            }
+
+            $status = $response->status();
+
+            if ($status === 200) {
+                $flags[$name] = true;
+
+                continue;
+            }
+
+            if ($status === 401) {
+                $this->_logWarning("/repos/{$name}/contents/specflow", 401);
+                throw GithubException::invalidToken();
+            }
+
+            if ($status === 403 && $response->header('X-RateLimit-Remaining') === '0') {
+                $this->_logWarning("/repos/{$name}/contents/specflow", 403);
+                $rateLimited = true;
+                $flags[$name] = false;
+
+                continue;
+            }
+
+            // 404 / 一般 403(權限)/ 其他 → 視為無 specflow
+            if ($status !== 404) {
+                $this->_logWarning("/repos/{$name}/contents/specflow", $status);
+            }
+
+            $flags[$name] = false;
+        }
+
+        return ['flags' => $flags, 'rateLimited' => $rateLimited];
+    }
+
+    /**
      * 讀 repo 的 specflow/project.md 原始內容。
      * 404 → null(沒有就是沒有);401/403-rate/5xx/逾時 → GithubException。
      */

@@ -21,6 +21,14 @@ interface GithubServiceInterface
 
     public function hasSpecflowDir(string $token, string $fullName, ?string $ref = null): bool;
 
+    /**
+     * 並行批次偵測多個 repo 是否含 specflow/ 目錄。
+     *
+     * @param  array<int, array{full_name: string, ref?: ?string}>  $repos
+     * @return array{flags: array<string, bool>, rateLimited: bool}
+     */
+    public function detectSpecflowDirs(string $token, array $repos): array;
+
     public function fetchProjectMd(string $token, string $fullName, ?string $ref = null): ?string;
 
     /**
