@@ -40,7 +40,7 @@ docker run -d \
   --name spectrun \
   -p 5971:5971 \
   -v spectrun-data:/data \
-  <your-dockerhub-account>/spectrun:latest
+  virtualorz/spectrun:latest
 ```
 
 開啟 **http://localhost:5971**。
