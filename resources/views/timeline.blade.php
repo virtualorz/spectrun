@@ -1,6 +1,6 @@
 @extends('layouts.spectrum')
 
-@section('title', 'specflow ledger · 時間軸視圖')
+@section('title', 'spectrun · 時間軸視圖')
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/timeline.css') }}?v={{ filemtime(public_path('css/timeline.css')) }}">

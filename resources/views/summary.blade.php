@@ -1,6 +1,6 @@
 @extends('layouts.spectrum')
 
-@section('title', 'specflow ledger · 專案摘要')
+@section('title', 'spectrun · 專案摘要')
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/summary.css') }}?v={{ filemtime(public_path('css/summary.css')) }}">
