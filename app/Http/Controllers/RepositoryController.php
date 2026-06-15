@@ -21,6 +21,8 @@ class RepositoryController extends Controller
 {
     private const REPO_LIST_CACHE_KEY = 'github.repo_list';
 
+    private const SPECFLOW_FLAGS_CACHE_KEY = 'github.specflow_flags';
+
     public function __construct(
         protected UserRepository $users,
         protected GithubService $github,
@@ -30,7 +32,8 @@ class RepositoryController extends Controller
     ) {}
 
     /**
-     * 列出 repo:cache-first(命中跳過 GitHub),偵測 specflow/、標記已追蹤。
+     * 列出 repo(秒開):cache-first 只取「純清單」,specflow 偵測交給 specflowFlags AJAX。
+     * 已追蹤者已知含 specflow(has_specflow=true);未追蹤者初始 pending(null)。
      */
     public function repository(): View|RedirectResponse
     {
@@ -42,7 +45,7 @@ class RepositoryController extends Controller
         $error = null;
         $repos = Cache::get(self::REPO_LIST_CACHE_KEY);
 
-        // cache miss 才打 GitHub
+        // cache miss 才打 GitHub(只列清單,不在此偵測 specflow)
         if ($repos === null) {
             try {
                 $repos = [];
@@ -51,7 +54,6 @@ class RepositoryController extends Controller
                         'full_name' => $repo->fullName,
                         'is_private' => $repo->private,
                         'default_branch' => $repo->defaultBranch,
-                        'has_specflow' => $this->github->hasSpecflowDir($user->access_token, $repo->fullName, $repo->defaultBranch),
                         'language' => $repo->language,
                     ];
                 }
@@ -69,11 +71,61 @@ class RepositoryController extends Controller
             $project = $tracked->get($repo['full_name']);
             $repo['selected'] = $project !== null;
             $repo['project_id'] = $project?->id;
+            // 已追蹤者必然含 specflow;未追蹤者待 AJAX 偵測(null = pending)
+            $repo['has_specflow'] = $project !== null ? true : null;
 
             return $repo;
         }, $repos);
 
         return view('repository', ['repos' => $repos, 'error' => $error]);
+    }
+
+    /**
+     * AJAX(C+ 漸進載入):並行偵測未追蹤 repo 的 specflow 旗標,回 JSON map。
+     */
+    public function specflowFlags(): JsonResponse
+    {
+        $user = $this->users->current();
+        if ($user === null) {
+            return response()->json(['flags' => [], 'rateLimited' => false], 401);
+        }
+
+        $list = Cache::get(self::REPO_LIST_CACHE_KEY) ?? [];
+        $cachedFlags = Cache::get(self::SPECFLOW_FLAGS_CACHE_KEY, []);
+        $tracked = $this->projects->tracked()->keyBy('full_name');
+
+        // 排除「已追蹤(已知 true)」與「已在 flags 快取」者,其餘才需偵測
+        $toDetect = [];
+        foreach ($list as $repo) {
+            $name = $repo['full_name'];
+            if ($tracked->has($name) || array_key_exists($name, $cachedFlags)) {
+                continue;
+            }
+            $toDetect[] = ['full_name' => $name, 'ref' => $repo['default_branch'] ?? null];
+        }
+
+        $rateLimited = false;
+        if ($toDetect !== []) {
+            try {
+                $result = $this->github->detectSpecflowDirs($user->access_token, $toDetect);
+                $cachedFlags = array_merge($cachedFlags, $result['flags']);
+                $rateLimited = $result['rateLimited'];
+                Cache::put(self::SPECFLOW_FLAGS_CACHE_KEY, $cachedFlags, now()->addMinutes(10));
+            } catch (GithubException $e) {
+                if ($e->reason === 'invalid_token') {
+                    return response()->json(['flags' => $cachedFlags, 'tokenInvalid' => true], 401);
+                }
+                $rateLimited = true;
+            }
+        }
+
+        // 已追蹤者一併補 true,前端統一以 flags map 處理
+        $flags = $cachedFlags;
+        foreach ($tracked as $name => $project) {
+            $flags[$name] = true;
+        }
+
+        return response()->json(['flags' => $flags, 'rateLimited' => $rateLimited]);
     }
 
     /**
@@ -121,7 +173,7 @@ class RepositoryController extends Controller
                 fullName: $repo['full_name'],
                 isPrivate: (bool) $repo['is_private'],
                 defaultBranch: $repo['default_branch'],
-                hasSpecflow: (bool) $repo['has_specflow'],
+                hasSpecflow: true, // 只有偵測到含 specflow 的 repo 才可勾選,故必為 true
                 displayName: $fullName,                  // 初版 display_name = full_name
                 techStack: $techFromMd ?? $language,     // project.md 優先、language fallback
                 lastSyncedAt: now(),

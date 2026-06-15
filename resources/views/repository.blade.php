@@ -34,12 +34,14 @@
 
     <form method="POST" action="{{ route('repository.store') }}">
       @csrf
+      <div id="flowNotice" class="msg err show" style="display:none;margin:0 0 14px"><span></span></div>
       <div id="repoList">
         @forelse ($repos as $r)
-          <label class="repo {{ ($r['selected'] ?? false) ? 'sel' : '' }} {{ $r['has_specflow'] ? '' : 'noflow' }}">
+          @php $flow = $r['has_specflow'] ?? null; @endphp
+          <label class="repo {{ ($r['selected'] ?? false) ? 'sel' : '' }} {{ $flow === false ? 'noflow' : '' }}" data-full-name="{{ $r['full_name'] }}">
             <input type="checkbox" class="repocb" name="selected[]" value="{{ $r['full_name'] }}"
                    style="position:absolute;opacity:0;width:0;height:0;pointer-events:none"
-                   @checked($r['selected'] ?? false) @disabled(! $r['has_specflow'])>
+                   @checked($r['selected'] ?? false) @disabled($flow !== true)>
             <div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M4 12.5l5 5 11-12"/></svg></div>
             <div class="info">
               <div class="rn">{{ $r['full_name'] }}</div>
@@ -49,11 +51,15 @@
                 @else
                   <span class="tag pub">public</span>
                 @endif
-                @if ($r['has_specflow'])
-                  <span class="tag has">含 specflow/</span>
-                @else
-                  <span style="color:var(--faint)">無 specflow/ 目錄</span>
-                @endif
+                <span class="flowtag">
+                  @if ($flow === true)
+                    <span class="tag has">含 specflow/</span>
+                  @elseif ($flow === false)
+                    <span style="color:var(--faint)">無 specflow/ 目錄</span>
+                  @else
+                    <span style="color:var(--faint)">偵測中…</span>
+                  @endif
+                </span>
               </div>
             </div>
           </label>
@@ -79,5 +85,47 @@
       cb.closest('.repo').classList.toggle('sel', cb.checked);
     });
   });
+
+  // C+ 漸進載入:頁面已秒開,這裡再 fetch 各 repo 的 specflow 旗標逐列補上
+  (function () {
+    var list = document.getElementById('repoList');
+    var notice = document.getElementById('flowNotice');
+    if (!list || !list.querySelector('.repo')) return;
+
+    function showNotice(msg) {
+      if (!notice) return;
+      notice.querySelector('span').textContent = msg;
+      notice.style.display = '';
+    }
+
+    fetch('{{ route('repository.specflow') }}', { headers: { 'Accept': 'application/json' } })
+      .then(function (r) {
+        if (r.status === 401) { showNotice('GitHub token 失效,請到設定頁更換。'); return null; }
+        return r.json();
+      })
+      .then(function (d) {
+        if (!d) return;
+        if (d.tokenInvalid) { showNotice('GitHub token 失效,請到設定頁更換。'); }
+        var flags = d.flags || {};
+        // 遍歷各列、用 dataset 比對,避免 querySelector 對含「/」名稱的轉義問題
+        list.querySelectorAll('.repo[data-full-name]').forEach(function (label) {
+          var name = label.getAttribute('data-full-name');
+          if (!(name in flags)) return;
+          var tag = label.querySelector('.flowtag');
+          var cb = label.querySelector('.repocb');
+          if (flags[name]) {
+            if (tag) tag.innerHTML = '<span class="tag has">含 specflow/</span>';
+            label.classList.remove('noflow');
+            if (cb) cb.disabled = false;
+          } else {
+            if (tag) tag.innerHTML = '<span style="color:var(--faint)">無 specflow/ 目錄</span>';
+            label.classList.add('noflow');
+            if (cb) cb.disabled = true;
+          }
+        });
+        if (d.rateLimited) { showNotice('GitHub 額度用罄,部分 repo 尚未偵測完成,請稍後重新整理。'); }
+      })
+      .catch(function () { /* 靜默,保留 pending 顯示 */ });
+  })();
 </script>
 @endpush

@@ -71,7 +71,7 @@
         <span>這組 token 會以 <b>AES 加密</b>後存放在你自己的伺服器(使用 Spectrum 的 APP_KEY 加密),只用於讀取,<b>不會外傳</b>到任何第三方。</span>
       </div>
 
-      <button class="btn" type="submit">完成設定</button>
+      <button class="btn" id="setupBtn" type="submit">完成設定</button>
     </form>
   </div>
 
@@ -89,6 +89,18 @@
         tok.type = tok.type === 'password' ? 'text' : 'password';
         tok.focus();
       };
+    }
+  })();
+
+  // 送出後 loading 回饋(後端要打 GitHub 驗證,需要一點時間)
+  (function () {
+    var form = document.querySelector('form[action="{{ route('setup.store') }}"]');
+    var btn = document.getElementById('setupBtn');
+    if (form && btn) {
+      form.addEventListener('submit', function () {
+        btn.disabled = true;
+        btn.textContent = '驗證中…';
+      });
     }
   })();
 </script>

@@ -23,6 +23,7 @@ Route::middleware('auth.user')->group(function () {
     Route::get('/summary/{project}', [ProjectController::class, 'summary'])->name('summary');
 
     Route::get('/repository', [RepositoryController::class, 'repository'])->name('repository');
+    Route::get('/repository/specflow-flags', [RepositoryController::class, 'specflowFlags'])->name('repository.specflow');
     Route::post('/repository', [RepositoryController::class, 'handleRepository'])->name('repository.store');
     Route::post('/repository/sync', [RepositoryController::class, 'syncProjects'])->name('repository.sync');
     Route::get('/repository/{project}/branches', [RepositoryController::class, 'branches'])->name('repository.branches');

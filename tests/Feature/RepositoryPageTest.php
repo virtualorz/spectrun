@@ -73,7 +73,8 @@ class RepositoryPageTest extends TestCase
         $response->assertOk();
         $response->assertSee('octocat/has-flow');
         $response->assertSee('octocat/no-flow');
-        $response->assertSee('含 specflow/');
+        // specflow 偵測已移到 AJAX(C+),初始 GET 顯示 pending 佔位,不再同步出現「含 specflow/」
+        $response->assertSee('偵測中…');
 
         $cached = Cache::get(self::CACHE_KEY);
         $this->assertNotNull($cached);
