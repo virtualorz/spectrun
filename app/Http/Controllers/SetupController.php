@@ -8,6 +8,7 @@ use App\Repositories\UserRepository;
 use App\Services\Github\GithubService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class SetupController extends Controller
@@ -53,7 +54,7 @@ class SetupController extends Controller
             return back()->withErrors(['access_token' => 'GitHub 連線失敗,請稍後再試'])->withInput();
         }
 
-        $this->users->createFromSetup(new CreateUserDto(
+        $user = $this->users->createFromSetup(new CreateUserDto(
             account: $validated['account'],
             password: $validated['password'],
             accessToken: $token,
@@ -62,6 +63,10 @@ class SetupController extends Controller
             avatarUrl: $profile->avatarUrl,
             connectedAt: now(),
         ));
+
+        // 設定完成後直接以該帳號登入,才不會跳轉 repository 時被 auth.user 攔下
+        Auth::login($user);
+        $request->session()->regenerate();
 
         return redirect()->route('repository');
     }

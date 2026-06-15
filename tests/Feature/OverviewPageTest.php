@@ -13,13 +13,13 @@ class OverviewPageTest extends TestCase
 
     private function makeUser(): void
     {
-        User::create([
+        $this->actingAs(User::create([
             'account' => 'admin',
             'password' => 'secret123',
             'access_token' => 'ghp_token',
             'github_username' => 'octocat',
             'github_user_id' => 1,
-        ]);
+        ]));
     }
 
     public function test_redirects_to_setup_when_no_user(): void

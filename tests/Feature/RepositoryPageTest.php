@@ -17,13 +17,17 @@ class RepositoryPageTest extends TestCase
 
     private function makeUser(): User
     {
-        return User::create([
+        $user = User::create([
             'account' => 'admin',
             'password' => 'secret123',
             'access_token' => 'ghp_token',
             'github_username' => 'octocat',
             'github_user_id' => 1,
         ]);
+
+        $this->actingAs($user);
+
+        return $user;
     }
 
     /** has-flow 含 specflow/、no-flow 不含;repos 帶 language。 */

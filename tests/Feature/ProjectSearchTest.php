@@ -13,13 +13,13 @@ class ProjectSearchTest extends TestCase
 
     private function makeUser(): void
     {
-        User::create([
+        $this->actingAs(User::create([
             'account' => 'admin',
             'password' => 'secret123',
             'access_token' => 'ghp_token',
             'github_username' => 'octocat',
             'github_user_id' => 1,
-        ]);
+        ]));
     }
 
     private function seedProjects(): void
@@ -55,9 +55,10 @@ class ProjectSearchTest extends TestCase
         ]);
     }
 
-    public function test_requires_user(): void
+    public function test_unauthenticated_is_redirected(): void
     {
-        $this->post('/project/search', ['keyword' => 'alpha'])->assertForbidden();
+        // 無任何 user + 未登入 → auth.user middleware 先攔,導向 setup
+        $this->post('/project/search', ['keyword' => 'alpha'])->assertRedirect(route('setup'));
     }
 
     public function test_filters_by_project_name(): void

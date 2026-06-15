@@ -20,6 +20,11 @@ class UserRepository
         return User::query()->first();
     }
 
+    public function findByAccount(string $account): ?User
+    {
+        return User::query()->where('account', $account)->first();
+    }
+
     public function createFromSetup(CreateUserDto $dto): User
     {
         // password / access_token 由 User model 的 hashed / encrypted cast 處理
