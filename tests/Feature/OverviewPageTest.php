@@ -53,6 +53,8 @@ class OverviewPageTest extends TestCase
             'tasks_total' => 5,
             'discussion_count' => 0,
             'tokens_at_close' => 38120,
+            'issued_at' => now()->subHours(3),
+            'closed_at' => now()->subHour(),
         ]);
 
         $response = $this->get('/');
@@ -60,8 +62,12 @@ class OverviewPageTest extends TestCase
         $response->assertOk();
         $response->assertSee('octocat/spectrum');
         $response->assertSee('Laravel · PHP 8.3');
-        $response->assertSee('導入 Repository Pattern');
-        $response->assertSee('0001');
+        // 卡片改為鳥瞰式:四格統計 + token 柱狀圖 + 搜尋框,不再逐筆列 change
+        $response->assertSee('累計跨度');
+        $response->assertSee('class="spark"', false);
+        $response->assertSee('搜尋專案');
+        // 逐筆 change 內容已移除,不應再出現在總覽卡片
+        $response->assertDontSee('導入 Repository Pattern');
     }
 
     public function test_shows_empty_state_when_no_tracked_project(): void

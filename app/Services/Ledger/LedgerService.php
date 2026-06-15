@@ -19,17 +19,53 @@ class LedgerService implements LedgerServiceInterface
      */
     public function build(Collection $projects): array
     {
-        return $projects->map(fn (Project $project): array => [
-            'id' => $project->id,
-            'display_name' => $project->display_name ?? $project->full_name,
-            'full_name' => $project->full_name,
-            'tech_stack' => $project->tech_stack,
-            'has_specflow' => (bool) $project->has_specflow,
-            'last_synced_at' => $project->last_synced_at,
-            'changes' => $project->changes
-                ->map(fn (ProjectChange $change): array => $this->_mapChange($change))
-                ->all(),
-        ])->all();
+        return $projects->map(function (Project $project): array {
+            $changes = $project->changes;
+            $closed = $changes->where('status', 'closed');
+
+            return [
+                'id' => $project->id,
+                'display_name' => $project->display_name ?? $project->full_name,
+                'full_name' => $project->full_name,
+                'tech_stack' => $project->tech_stack,
+                'has_specflow' => (bool) $project->has_specflow,
+                'last_synced_at' => $project->last_synced_at,
+                'stats' => [
+                    'total' => $changes->count(),
+                    'closed' => $closed->count(),
+                    'tokens' => $changes->sum(fn (ProjectChange $c): int => (int) ($c->tokens_at_close ?? $c->tokens_at_new ?? 0)),
+                    'span_human' => $this->_humanSpan(
+                        (int) $closed->sum(fn (ProjectChange $c): int => $this->_span($c->issued_at, $c->closed_at))
+                    ),
+                ],
+                'spark' => $changes->sortBy('number')->values()->slice(-11)
+                    ->map(fn (ProjectChange $c): array => [
+                        'tokens' => (int) ($c->tokens_at_close ?? $c->tokens_at_new ?? 0),
+                        'running' => $c->status !== 'closed',
+                    ])->values()->all(),
+                'changes' => $changes
+                    ->map(fn (ProjectChange $change): array => $this->_mapChange($change))
+                    ->all(),
+            ];
+        })->all();
+    }
+
+    /**
+     * 把秒數轉成人類可讀跨度:>=1天 `Nd Nh`、>=1小時 `Nh Nm`、否則 `Nm`(0 → `0m`)。
+     */
+    private function _humanSpan(int $seconds): string
+    {
+        $s = max(0, $seconds);
+
+        if ($s >= 86400) {
+            return intdiv($s, 86400).'d '.intdiv($s % 86400, 3600).'h';
+        }
+
+        if ($s >= 3600) {
+            return intdiv($s, 3600).'h '.intdiv($s % 3600, 60).'m';
+        }
+
+        return intdiv($s, 60).'m';
     }
 
     /**
