@@ -16,12 +16,14 @@
     <h1 class="h1">登入</h1>
     <p class="lede">輸入帳號與密碼以登入 Spectrum。</p>
 
-    <form method="POST" action="#">
+    <form method="POST" action="{{ route('login.attempt') }}">
+      @csrf
       <div class="field">
         <label class="flabel" for="account">帳號</label>
         <div class="inwrap">
-          <input id="account" name="account" type="text" autocomplete="username" spellcheck="false">
+          <input id="account" name="account" type="text" value="{{ old('account') }}" autocomplete="username" spellcheck="false">
         </div>
+        @error('account')<div class="msg err show"><span>{{ $message }}</span></div>@enderror
       </div>
 
       <div class="field">
@@ -29,6 +31,7 @@
         <div class="inwrap">
           <input id="password" name="password" type="password" autocomplete="current-password">
         </div>
+        @error('password')<div class="msg err show"><span>{{ $message }}</span></div>@enderror
       </div>
 
       <button class="btn" type="submit">登入</button>

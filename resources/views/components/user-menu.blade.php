@@ -4,7 +4,10 @@
   </button>
   <div class="menu" id="userMenu">
     <a class="mi" href="{{ route('repository') }}">我的 Repository</a>
-    <a class="mi" href="#">登出</a>
+    <form method="POST" action="{{ route('logout') }}">
+      @csrf
+      <button class="mi" type="submit" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;font:inherit;color:inherit">登出</button>
+    </form>
   </div>
 </div>
 
