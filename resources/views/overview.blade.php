@@ -15,38 +15,30 @@
 
   <div class="crumb"><span class="cur">所有專案</span></div>
 
+  <div class="search"><input id="q" type="text" placeholder="搜尋專案…" autocomplete="off"></div>
+
   <div class="pgrid">
     @forelse ($projects as $p)
       @php
-        $changes = $p['changes'] ?? [];
-        $total = count($changes);
-        $closed = collect($changes)->where('status', 'closed')->count();
-        $tokens = collect($changes)->sum(fn ($c) => (int) ($c['tokens_at_close'] ?? 0));
+        $bars = $p['spark'] ?? [];
+        $maxTok = collect($bars)->max('tokens') ?: 1;
       @endphp
       <div class="pcard" role="link" tabindex="0" data-href="{{ route('summary', $p['id']) }}" style="cursor:pointer">
         <div class="pn">{{ $p['display_name'] }}</div>
         <div class="pt">{{ $p['tech_stack'] ?? $p['full_name'] }}</div>
 
         <div class="pstats">
-          <div class="ps"><div class="l">spec 總數</div><div class="v">{{ $total }}</div></div>
-          <div class="ps"><div class="l">已完成</div><div class="v g">{{ $closed }}</div></div>
-          <div class="ps"><div class="l">累計 token</div><div class="v">{{ number_format($tokens) }}</div></div>
-          <div class="ps"><div class="l">specflow</div><div class="v">{{ $p['has_specflow'] ? '✓' : '—' }}</div></div>
+          <div class="ps"><div class="l">spec 總數</div><div class="v">{{ $p['stats']['total'] }}</div></div>
+          <div class="ps"><div class="l">已完成</div><div class="v g">{{ $p['stats']['closed'] }}</div></div>
+          <div class="ps"><div class="l">累計 token</div><div class="v">{{ number_format($p['stats']['tokens']) }}</div></div>
+          <div class="ps"><div class="l">累計跨度</div><div class="v">{{ $p['stats']['span_human'] }}</div></div>
         </div>
 
-        @if ($total > 0)
-          <div class="clist">
-            @foreach ($changes as $c)
-              <div class="citem">
-                <span class="iid">{{ $c['number'] }}</span>
-                {{ $c['title'] }}
-                <span class="badge {{ $c['status'] === 'closed' ? 'closed' : 'run' }}">{{ $c['status'] ?? '—' }}</span>
-                <span class="sep">·</span>決策 {{ $c['decisions_done'] }}/{{ $c['decisions_total'] }}
-                <span class="sep">·</span>任務 {{ $c['tasks_done'] }}/{{ $c['tasks_total'] }}
-              </div>
-            @endforeach
-          </div>
-        @endif
+        <div class="spark">
+          @foreach ($bars as $b)
+            <div class="b {{ $b['running'] ? 'run' : '' }}" style="height:{{ max(3, (int) round($b['tokens'] / $maxTok * 30)) }}px"></div>
+          @endforeach
+        </div>
 
         <div class="act">
           <span>{{ $p['last_synced_at'] ? '最後同步 '.$p['last_synced_at']->format('Y-m-d H:i') : '尚未同步' }}</span>

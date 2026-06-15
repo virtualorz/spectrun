@@ -9,7 +9,8 @@ use Illuminate\Support\Collection;
 interface LedgerServiceInterface
 {
     /**
-     * 把追蹤專案(含 changes)整理成 ledger 頁顯示用陣列。
+     * 把追蹤專案(含 changes)整理成 overview 頁顯示用陣列。
+     * 每筆含 stats(total/closed/tokens/span_human)與 spark(最近 11 筆 {tokens, running})。
      *
      * @param  Collection<int, Project>  $projects
      * @return array<int, array<string, mixed>>
